@@ -197,6 +197,25 @@ Manual (non-AI) changes are recorded in the final section.
 
 ---
 
+## Entry 14 - Build step 3: Yahoo provider (2026-10-10)
+
+**Prompt:** "Alright, this has been committed. Let's begin Step 3."
+
+**Why:** Implement the upstream integration (validation, timeout, capped retries) and the live-or-canned test strategy agreed in Entry 5.
+
+**Outcome:**
+- Fixtures: a real TSLA capture (606 bars) and a real not-found response, plus hand-written null-bar and empty-range fixtures, because the real capture contained no nulls.
+- **AI found a further undocumented edge case by probing:** for a range with no trades, Yahoo omits `timestamp` entirely and returns `quote: [{}]`. The Zod schema makes those fields optional, so a quiet weekend is not mistaken for a malformed response.
+- Layers:
+  - `fetchWithRetry` / `retryPolicy`: vendor-neutral, per-attempt `AbortSignal.timeout`, full-jitter exponential backoff, and `Retry-After` honoured but capped. Only network errors, timeouts, 408, 429 and 5xx are retried.
+  - `YahooChartProvider`, `yahooRequestBuilder`, `yahooResponseSchema` and `yahooResponseMapper`: Yahoo specifics only, behind the `MarketDataProvider` interface.
+  - Typed `AppError` subclasses (400/404/502/503), created now because the provider must throw them.
+- AI self-correction during implementation: the first draft treated any 404 as "symbol not found". It was changed to require Yahoo's `chart.error` body, so a misconfigured base URL surfaces as a 502 rather than misleading users.
+- Contract test: live when Yahoo is reachable, canned fixture **only** when it is unreachable. Schema drift from a reachable Yahoo still fails the test, which is the point of a contract test. `CONTRACT_YAHOO_BASE_URL=http://127.0.0.1:9` forces the fallback. Both paths were verified.
+- 120 tests passing. Typecheck, lint (2 errors found and fixed) and format are clean.
+
+---
+
 ## Manual changes (outside AI)
 
 _None yet._

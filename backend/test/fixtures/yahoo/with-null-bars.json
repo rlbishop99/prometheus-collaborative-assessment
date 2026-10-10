@@ -1,0 +1,26 @@
+{
+  "chart": {
+    "result": [
+      {
+        "meta": {
+          "symbol": "TSLA",
+          "exchangeTimezoneName": "America/New_York",
+          "dataGranularity": "15m"
+        },
+        "timestamp": [1791552600, 1791553500, 1791554400, 1791555300],
+        "indicators": {
+          "quote": [
+            {
+              "low": [380.5, null, 381.25, 382],
+              "high": [382.5, null, 383.75, null],
+              "open": [381, null, 382, 383],
+              "close": [382, null, 383, 383.5],
+              "volume": [1000000, null, 1500000, 750000]
+            }
+          ]
+        }
+      }
+    ],
+    "error": null
+  }
+}

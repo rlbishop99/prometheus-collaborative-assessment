@@ -1,0 +1,15 @@
+{
+  "chart": {
+    "result": [
+      {
+        "meta": {
+          "symbol": "TSLA",
+          "exchangeTimezoneName": "America/New_York",
+          "dataGranularity": "15m"
+        },
+        "indicators": { "quote": [{}] }
+      }
+    ],
+    "error": null
+  }
+}
