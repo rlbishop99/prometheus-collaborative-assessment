@@ -2,7 +2,7 @@
 
 Repo for the Prometheus Group Take Home AI Collaboration Assessment.
 
-Symbol Tracker is a full-stack app that looks up a stock symbol, pulls the last 30 days of **15-minute intraday bars** from Yahoo Finance, and summarizes them **per trading day**: average low, average high and total volume. The UI shows one day at a time in four cells. You can pick any trading day in the window, and each value is compared with the latest (in-progress) day.
+Symbol Tracker is a full-stack app that looks up a stock symbol, pulls the last 30 days of **15-minute intraday bars** from Yahoo Finance, and summarizes them **per trading day**: average low, average high and total volume. The UI has two views: a **Day** view showing one day in four cells, with a date picker for any trading day in the window, and a **Table** view listing every day, newest first. Either way, each value is compared with the latest (in-progress) day.
 
 - **Backend:** Node.js 22+ / TypeScript, Fastify, Zod
 - **Frontend:** React 19 / TypeScript, Vite, CSS modules, react-day-picker
@@ -24,7 +24,8 @@ Open **http://localhost:5173** and search a symbol such as `TSLA`, `AAPL`, `BRK.
 | Command (repo root) | What it does |
 |---|---|
 | `npm run dev` | Both apps with hot reload (`dev:backend` / `dev:frontend` run one) |
-| `npm test` | All tests in both workspaces |
+| `npm test` | All offline tests in both workspaces |
+| `npm run test:contract` | The live Yahoo contract test (needs the network) |
 | `npm run lint` | ESLint across the repo |
 | `npm run typecheck` | `tsc --noEmit` in both workspaces |
 | `npm run format:check` | Prettier check |
@@ -64,6 +65,8 @@ Errors are [RFC 7807](https://www.rfc-editor.org/rfc/rfc7807) `application/probl
 | 503 | `/problems/upstream-unavailable` | Yahoo unreachable after a timeout and capped retries |
 | 500 | `about:blank` | Unexpected error (details are logged, never returned) |
 
+For the 502 and 503 problems, `detail` is a fixed sentence; Yahoo's own error text and schema issues go to the server log only.
+
 `GET /health` is a liveness probe that does not call Yahoo.
 
 ---
@@ -75,15 +78,16 @@ The brief leaves several behaviors undefined. Each was raised during planning an
 | Question | Decision |
 |---|---|
 | What are `lowAverage` / `highAverage`? | Mean of the day's 15-minute bar lows / highs |
-| "Last month" | Rolling 30 days, starting at **midnight in the exchange's timezone** |
+| "Last month" | Rolling 30 days, starting at **midnight in the exchange's timezone** 30 calendar days ago and running through today. That spans 31 calendar dates (today is included), of which about 21 are trading days |
 | Day boundaries | Grouped in the exchange's local timezone (from Yahoo's `exchangeTimezoneName`), not UTC, so DST is handled |
 | Missing data | Bars with null or invalid values are dropped before any math; days with no valid bars are omitted |
 | Precision | Computed in `double`, rounded **once** at the end: round to 8 decimals (strips float noise), then **ceiling** to 4 decimals |
 | Volume | Integer sum of the day's bars |
 | Today | The in-progress day is included; extended-hours bars are excluded |
 | Ordering | Ascending by day |
-| Caching | 2-minute TTL per symbol (backend), plus a 2-minute per-tab cache so a re-search within 2 minutes makes no request |
-| Outages | If a re-search fails, the UI keeps that symbol's last good data and shows "Error: Symbol API currently unreachable" |
+| Caching | 2-minute TTL per symbol, on the backend only. The UI asks the API on every search (it never polls), so a single cache decides freshness and data is never more than 2 minutes old |
+| Outages | While a re-search loads, and if it then fails, the UI keeps that symbol's last good data; on failure it shows "Error: Symbol API currently unreachable" |
+| Data missing on screen | Before the first search, only the search form and "---" cells show. Once a search has shown data, the layout stays put while data is missing (a new symbol loading, a failure, a symbol with no trades): the date picker shows "---" and can't be opened, the Day/Table toggle and the chosen view stay, the table's arrow note becomes "Arrows compare each day with the latest day.", and the table shows 30 rows of "---" that shimmer while a search runs |
 
 Two findings from probing the live API shaped the backend. Yahoo's default range for `interval=15m` is **1 day**, so the brief's sample request never returns a month and the API always sends an explicit `period1`/`period2`. Yahoo also rejects requests without a browser User-Agent (HTTP 429).
 
@@ -94,8 +98,8 @@ Two findings from probing the live API shaped the backend. Yahoo's default range
 ```
 React UI ──fetch /api──▶ Fastify route ──▶ DailySummaryService ──▶ MarketDataProvider (Yahoo)
    │                          │                  │   │
- session cache           RFC 7807          TTL cache  in-flight request coalescing
- (per tab, 2 min)        error handler     (2 min)    (one upstream call per symbol at a time)
+ last good data          RFC 7807          TTL cache  in-flight request coalescing
+ (per tab, no TTL)       error handler     (2 min)    (one upstream call per symbol at a time)
 ```
 
 **Backend (`backend/src`)** is layered so each part has one job and depends only on abstractions:
@@ -110,11 +114,13 @@ React UI ──fetch /api──▶ Fastify route ──▶ DailySummaryService �
 **Frontend (`frontend/src`):**
 
 - `api/`: typed client with Zod validation and error classification.
-- `state/`: a pure reducer state machine and the session cache.
+- `state/`: a pure reducer state machine and the session cache (each symbol's last good data, shown while it reloads and during outages).
 - `hooks/`: `useSymbolSearch` (validation, cache, cancellation, retained data) plus small UI hooks.
 - `domain/`: formatting and trend logic.
-- `components/`: presentational components, one per concern (each metric is its own cell component).
+- `components/`: presentational components, one per concern (each metric is its own cell component; the table, the Day/Table toggle and the back button have their own).
 - `content/`: all user-facing copy.
+
+A search flows through the layers in one direction: `SymbolSearchForm` → `useSymbolSearch` (validates, fetches, remembers successes in the session cache) → `searchReducer` (state machine) → `selectDisplay` (what to show) → the metric cells and `WarningBanner`, whose text comes from `content/warningMessages.ts`. Failure rules (which failures keep data, which flag the input) live together in `state/toSearchFailure.ts`.
 
 Design tokens in `styles/tokens.css` drive every color and spacing value: a neon purple/lavender theme with mint-cyan glow accents, in dark and light variants.
 
@@ -129,14 +135,14 @@ Design tokens in `styles/tokens.css` drive every color and spacing value: a neon
 
 ## Testing
 
-418 automated tests (203 backend, 215 frontend):
+385 offline tests (172 backend, 213 frontend), plus one live contract test. Each behavior is tested at its own layer; higher layers check the wiring once rather than re-testing edge cases.
 
 - **Backend:**
   - Unit tests for every domain function: float-noise rounding, DST and UTC-midnight boundaries, nulls, window edges.
   - Retry and timeout timing, plus cache TTL boundaries and coalescing.
   - Route tests for every status code.
   - Full-stack tests through the real container with only the network and clock stubbed.
-- **Contract test:** calls the **real** Yahoo API and falls back to a canned capture in `backend/test/fixtures` **only** if Yahoo is unreachable, so schema drift is still caught. Force the offline path with `CONTRACT_YAHOO_BASE_URL=http://127.0.0.1:9 npm test --workspace backend`.
+- **Contract test** (`npm run test:contract`, kept out of `npm test` because it needs the network): calls the **real** Yahoo API and falls back to a canned capture in `backend/test/fixtures` **only** if Yahoo is unreachable, so schema drift is still caught. Force the offline path with `CONTRACT_YAHOO_BASE_URL=http://127.0.0.1:9 npm run test:contract`.
 - **Frontend:**
   - Client error mapping, the reducer and the session cache.
   - Hook flows, including stale-response races.
@@ -153,8 +159,11 @@ Every UI change was also checked manually in a browser (desktop, mobile width, k
 - Each metric cell is a keyboard-focusable group named by its label and described by its value, inside a named live region; hover or focus enlarges it.
 - Warnings use `role="alert"`; input errors set `aria-invalid` and `aria-describedby`.
 - The calendar dialog follows the WAI-ARIA pattern (arrow keys between days, Tab contained, closes on any loss of focus) and has a visible keyboard hint.
-- Trend comparisons are visible text, not color or hover alone.
-- Reduced-motion is respected, and all imagery is SVG with appropriate labelling.
+- Trend comparisons are visible text, not color or hover alone: a caption in the Day view, and a note above the table (with each value's caption read to screen readers).
+- The table has real row and column headers. Each row's date is a button, so rows are reachable by keyboard. Returning from a day puts focus back on its row.
+- The Day/Table toggle is a named group of `aria-pressed` buttons. While a search runs, the form is `aria-busy` and the search button shows a spinner, but it stays usable so a different symbol can replace the search.
+- Missing values are shown as "---" but read as "No data". Without data, the date picker is `aria-disabled` (still focusable and named), and only the first of the table's 30 placeholder rows is announced.
+- Reduced-motion is respected (spinner, table shimmer, scrolling), and all imagery is SVG with appropriate labelling.
 
 ---
 
@@ -165,14 +174,16 @@ This project was built in collaboration with Claude (Claude Code). The deliverab
 - **[`PROMPT_LOG.md`](PROMPT_LOG.md)**: every prompt, why it was sent, and what was kept, changed or rejected. It opens with a **Human review checkpoints** table summarizing where my review changed the outcome: spec decisions I made, AI proposals I rejected, copy I rewrote, and bugs I found in manual QA.
 - **Manual changes**: the final section of `PROMPT_LOG.md` describes changes made outside the AI and why.
 - **[`CLAUDE.md`](CLAUDE.md)**: the development tenets and locked decisions the AI was required to follow.
+- **Doc-block tag:** doc blocks appear only where a function could otherwise read as ambiguous, and each opens with `Rocko Bishop`, the contributor of record who reviewed and approved it. It does not mean the function was hand-written; most code was drafted by the AI, as `PROMPT_LOG.md` records.
 
 ---
 
 ## Known limitations and next steps
 
 - **Unofficial data source.** Yahoo's chart API is undocumented and may change or rate-limit. The schema validation and the contract test make drift visible, and the provider interface makes replacing it a contained change.
+- **Accepted layering shortcut.** `domain/symbol.ts` throws `InvalidSymbolError`, an application error that carries its HTTP status, so the domain layer is not fully HTTP-agnostic. A second consumer (a CLI or a queue worker) would warrant a domain-level error mapped at the HTTP edge. For one HTTP API it would only add a translation step.
 - **Single-instance cache.** The cache is in-process. For multiple API instances, implement the existing `Cache` interface over Redis.
 - **Not yet added for public deployment:** rate limiting, security headers (e.g. `@fastify/helmet`) and request metrics.
-- **Bundle size.** The date picker (with `date-fns`) is most of the 117 KB gzipped JS. It is only needed after a search, so it could be lazy-loaded.
-- **Styling.** A visual polish pass is planned after this functional milestone.
+- **Bundle size.** The date picker (with `date-fns`) is most of the 120 KB gzipped JS. It is only needed after a search, so it could be lazy-loaded.
+- **Browser coverage.** Visual QA was done in a Chromium-based browser. The layout relies on container queries (`cqi`/`cqb`), `:has()` and `100dvh`, so Safari and Firefox should be checked before release.
 - **No browser E2E suite.** Automated UI tests run in jsdom. A Playwright suite would add coverage of real layout.
