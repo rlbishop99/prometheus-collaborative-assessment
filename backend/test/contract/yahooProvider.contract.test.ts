@@ -7,10 +7,12 @@
  * back: a reachable Yahoo returning an unexpected shape must fail this test, because that drift
  * is exactly what the test exists to detect.
  *
+ * It is excluded from `npm test` because it needs the network; run it with `npm run test:contract`.
  * Set CONTRACT_YAHOO_BASE_URL to point elsewhere; e.g. `http://127.0.0.1:9` forces the fallback.
  */
 import { describe, expect, it } from 'vitest';
 
+import { FETCH_BUFFER_DAYS, WINDOW_DAYS } from '../../src/config/appConfig.js';
 import { buildDailySummaries } from '../../src/domain/aggregation/buildDailySummaries.js';
 import {
   computeFetchRange,
@@ -22,7 +24,6 @@ import { YahooChartProvider } from '../../src/providers/yahoo/yahooChartProvider
 import { instantDeps, jsonResponse, loadYahooFixture, testYahooConfig } from '../support/http.js';
 
 const SYMBOL = 'TSLA';
-const WINDOW_DAYS = 30;
 
 interface ContractSample {
   readonly source: 'live' | 'fixture';
@@ -32,7 +33,7 @@ interface ContractSample {
 
 const loadSample = async (): Promise<ContractSample> => {
   const now = new Date();
-  const range = computeFetchRange(now, WINDOW_DAYS, 2);
+  const range = computeFetchRange(now, WINDOW_DAYS, FETCH_BUFFER_DAYS);
   try {
     const live = new YahooChartProvider({
       ...testYahooConfig,

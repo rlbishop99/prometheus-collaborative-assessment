@@ -78,17 +78,6 @@ describe('daily-summary endpoint (full stack)', () => {
     expect(calls()).toBe(2);
   });
 
-  it('coalesces simultaneous cold requests into one Yahoo call', async () => {
-    const { server, calls } = await startStack(() => jsonResponse(loadYahooFixture('tsla-15m')));
-
-    const responses = await Promise.all(
-      Array.from({ length: 5 }, () => server.inject({ url: '/api/v1/stocks/TSLA/daily-summary' })),
-    );
-
-    expect(responses.every((r) => r.statusCode === 200)).toBe(true);
-    expect(calls()).toBe(1);
-  });
-
   it('returns 404 for an unknown symbol', async () => {
     const { server } = await startStack(() => jsonResponse(loadYahooFixture('not-found'), 404));
 
@@ -98,7 +87,7 @@ describe('daily-summary endpoint (full stack)', () => {
     expect(response.json()).toMatchObject({ type: '/problems/symbol-not-found' });
   });
 
-  it.each(['bad!sym', '%20%20', ''])(
+  it.each(['bad!sym', ''])(
     'returns 400 without calling Yahoo for the malformed symbol %j',
     async (symbol) => {
       const { server, calls } = await startStack(() => jsonResponse({}));

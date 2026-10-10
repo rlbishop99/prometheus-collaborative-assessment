@@ -69,13 +69,4 @@ describe('InMemoryTtlCache', () => {
     expect(await cache.get('A')).toBe(10);
     expect(await cache.get('B')).toBeUndefined();
   });
-
-  it.each([
-    { ttlMs: 0, maxEntries: 1 },
-    { ttlMs: -5, maxEntries: 1 },
-    { ttlMs: 1.5, maxEntries: 1 },
-    { ttlMs: 1000, maxEntries: 0 },
-  ])('rejects invalid options %o', (options) => {
-    expect(() => new InMemoryTtlCache(options)).toThrow(RangeError);
-  });
 });

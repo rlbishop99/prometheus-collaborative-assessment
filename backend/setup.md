@@ -60,16 +60,17 @@ Symbols are case-insensitive and may contain letters, digits, `.`, `-`, `^` and 
 ## Test
 
 ```bash
-npm test --workspace backend            # all tests
+npm test --workspace backend            # all offline tests
+npm run test:contract --workspace backend   # the live Yahoo contract test
 npm run test:coverage --workspace backend
 npm run typecheck --workspace backend
 npm run lint                            # from the repo root
 ```
 
-The contract test (`test/contract`) calls the **real** Yahoo API. It uses the canned capture in `test/fixtures/yahoo` only when Yahoo is unreachable. To force that offline path:
+The contract test (`test/contract`) calls the **real** Yahoo API, so `npm test` leaves it out and it runs only through `test:contract`. It uses the canned capture in `test/fixtures/yahoo` only when Yahoo is unreachable. To force that offline path:
 
 ```bash
-CONTRACT_YAHOO_BASE_URL=http://127.0.0.1:9 npm test --workspace backend
+CONTRACT_YAHOO_BASE_URL=http://127.0.0.1:9 npm run test:contract --workspace backend
 ```
 
 ## Configuration
@@ -90,8 +91,8 @@ Everything is set by environment variables, and every one is optional. Invalid v
 | `UPSTREAM_RETRY_MAX_DELAY_MS` | `2000` | Backoff and `Retry-After` cap |
 | `CACHE_TTL_MS` | `120000` | Per-symbol cache lifetime (2 minutes) |
 | `CACHE_MAX_ENTRIES` | `500` | Cache size bound (oldest evicted first) |
-| `WINDOW_DAYS` | `30` | Rolling window, from midnight exchange time |
-| `FETCH_BUFFER_DAYS` | `2` | Extra days fetched before trimming to the exact window |
+
+The 30-day window and the 2-day fetch buffer are constants in `src/config/appConfig.ts`, not environment variables, because the UI copy names the window ("in the last 30 days").
 
 Example: `PORT=8080 LOG_LEVEL=debug npm run dev --workspace backend`
 

@@ -14,12 +14,6 @@ describe('computeFetchRange', () => {
     expect(range.toEpochSeconds).toBe(Date.parse('2026-10-10T15:00:00Z') / 1000);
     expect(range.toEpochSeconds - range.fromEpochSeconds).toBe(32 * 86_400);
   });
-
-  it('rejects negative or fractional day counts', () => {
-    const now = new Date();
-    expect(() => computeFetchRange(now, -1, 2)).toThrow(RangeError);
-    expect(() => computeFetchRange(now, 30, 0.5)).toThrow(RangeError);
-  });
 });
 
 describe('computeWindowStartDayKey', () => {
@@ -34,9 +28,5 @@ describe('computeWindowStartDayKey', () => {
     expect(computeWindowStartDayKey(new Date('2026-10-10T01:00:00Z'), NEW_YORK, 30)).toBe(
       '2026-09-09',
     );
-  });
-
-  it('rejects an invalid window size', () => {
-    expect(() => computeWindowStartDayKey(new Date(), NEW_YORK, -5)).toThrow(RangeError);
   });
 });

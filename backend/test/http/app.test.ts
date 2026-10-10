@@ -9,7 +9,8 @@ import {
   UpstreamResponseError,
   UpstreamUnavailableError,
 } from '../../src/errors/appErrors.js';
-import type { DailySummaries, DailySummaryReader } from '../../src/services/dailySummaryService.js';
+import type { DailySummaries } from '../../src/domain/types.js';
+import type { DailySummaryReader } from '../../src/services/dailySummaryService.js';
 
 const summaries: DailySummaries = [
   { day: '2026-10-08', lowAverage: 40.2958, highAverage: 49.7534, volume: 49_073_348 },
@@ -118,9 +119,20 @@ describe('GET /api/v1/stocks/:symbol/daily-summary', () => {
       type,
       title: error.title,
       status,
-      detail: error.message,
+      detail: error.publicDetail,
       instance: '/api/v1/stocks/TSLA/daily-summary',
     });
+  });
+
+  it.each([
+    new UpstreamResponseError('Zod: expected array at chart.result'),
+    new UpstreamUnavailableError('Yahoo HTTP 503'),
+  ])('keeps upstream internals out of the %s response', async (error) => {
+    const server = await startApp(readerRejecting(error));
+
+    const response = await server.inject({ url: '/api/v1/stocks/TSLA/daily-summary' });
+
+    expect(response.body).not.toContain(error.message);
   });
 
   it('hides the details of unexpected errors behind a generic 500', async () => {

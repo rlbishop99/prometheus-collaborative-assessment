@@ -12,16 +12,19 @@ export abstract class AppError extends Error {
   abstract readonly type: string;
   abstract readonly title: string;
 
-  /**
-   * Rocko Bishop
-   * Creates an application error with a human-readable detail message and an optional cause, so
-   * the original failure is kept for logging.
-   * @param detail - Message describing this specific occurrence.
-   * @param options - Optional `cause` to chain the underlying error.
-   */
   constructor(detail: string, options: AppErrorOptions = {}) {
     super(detail, { cause: options.cause });
     this.name = new.target.name;
+  }
+
+  /**
+   * Rocko Bishop
+   * The `detail` sent to API clients. By default it is the message, which for client errors only
+   * describes the caller's own input. Upstream errors override it with fixed text, so vendor
+   * internals (schema issues, Yahoo's error codes, raw statuses) stay in the logs.
+   */
+  get publicDetail(): string {
+    return this.message;
   }
 }
 
@@ -44,6 +47,10 @@ export class UpstreamResponseError extends AppError {
   readonly status = 502;
   readonly type = '/problems/upstream-bad-response';
   readonly title = 'Upstream returned an invalid response';
+
+  override get publicDetail(): string {
+    return 'The market data provider returned data this service could not use. Please try again later.';
+  }
 }
 
 /** The upstream provider could not be reached, timed out, or kept failing after retries. */
@@ -51,4 +58,8 @@ export class UpstreamUnavailableError extends AppError {
   readonly status = 503;
   readonly type = '/problems/upstream-unavailable';
   readonly title = 'Upstream data provider unavailable';
+
+  override get publicDetail(): string {
+    return 'The market data provider could not be reached. Please try again later.';
+  }
 }

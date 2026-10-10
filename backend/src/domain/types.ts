@@ -33,3 +33,6 @@ export interface DailySummary {
   readonly highAverage: number;
   readonly volume: number;
 }
+
+/** A symbol's summaries, ascending by day: the endpoint's response body. */
+export type DailySummaries = readonly DailySummary[];

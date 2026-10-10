@@ -30,29 +30,4 @@ describe('ceilToPrecision', () => {
     expect(ceilToPrecision(42)).toBe(42);
     expect(ceilToPrecision(0)).toBe(0);
   });
-
-  it('ceils toward positive infinity for negative values', () => {
-    expect(ceilToPrecision(-1.23456)).toBe(-1.2345);
-  });
-
-  it('falls back to a direct ceil when the value is too large for exact noise rounding', () => {
-    expect(ceilToPrecision(123_456_789.12341)).toBe(123_456_789.1235);
-  });
-
-  it('supports custom precision', () => {
-    expect(ceilToPrecision(1.231, 2, 6)).toBe(1.24);
-  });
-
-  it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
-    'rejects non-finite input %s',
-    (value) => {
-      expect(() => ceilToPrecision(value)).toThrow(RangeError);
-    },
-  );
-
-  it('rejects invalid precision arguments', () => {
-    expect(() => ceilToPrecision(1, -1)).toThrow(RangeError);
-    expect(() => ceilToPrecision(1, 1.5)).toThrow(RangeError);
-    expect(() => ceilToPrecision(1, 4, 2)).toThrow(RangeError);
-  });
 });

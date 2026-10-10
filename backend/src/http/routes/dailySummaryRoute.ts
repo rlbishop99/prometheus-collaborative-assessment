@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 
 import type { DailySummaryReader } from '../../services/dailySummaryService.js';
 
-export const DAILY_SUMMARY_ROUTE = '/api/v1/stocks/:symbol/daily-summary';
+const DAILY_SUMMARY_ROUTE = '/api/v1/stocks/:symbol/daily-summary';
 
 /**
  * Serialization schema for the success body. Fastify compiles it into a dedicated serializer
@@ -33,8 +33,6 @@ interface DailySummaryRoute {
  * Rocko Bishop
  * Registers `GET /api/v1/stocks/:symbol/daily-summary`. The handler only delegates: validation,
  * caching and aggregation live in the service, and errors flow to the global handler.
- * @param app - The Fastify instance.
- * @param reader - The use case that produces the summaries.
  */
 export function registerDailySummaryRoute(app: FastifyInstance, reader: DailySummaryReader): void {
   app.get<DailySummaryRoute>(

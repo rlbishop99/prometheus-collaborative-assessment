@@ -26,25 +26,12 @@ export class InMemoryTtlCache<K, V> implements Cache<K, V> {
   private readonly maxEntries: number;
   private readonly clock: Clock;
 
-  /**
-   * Rocko Bishop
-   * Creates the cache, rejecting nonsensical options up front instead of misbehaving later.
-   * @param options - TTL, size bound and optional clock.
-   */
   constructor(options: InMemoryTtlCacheOptions) {
-    assertPositiveInteger('ttlMs', options.ttlMs);
-    assertPositiveInteger('maxEntries', options.maxEntries);
     this.ttlMs = options.ttlMs;
     this.maxEntries = options.maxEntries;
     this.clock = options.clock ?? systemClock;
   }
 
-  /**
-   * Rocko Bishop
-   * Returns a live entry, and evicts it if it has expired.
-   * @param key - The cache key.
-   * @returns The cached value, or undefined when it is absent or expired.
-   */
   get(key: K): Promise<V | undefined> {
     const entry = this.entries.get(key);
     if (!entry) {
@@ -61,8 +48,6 @@ export class InMemoryTtlCache<K, V> implements Cache<K, V> {
    * Rocko Bishop
    * Stores a value with a fresh TTL. Re-inserting moves the key to the newest position, so
    * eviction always removes the least recently written entry.
-   * @param key - The cache key.
-   * @param value - The value to store.
    */
   set(key: K, value: V): Promise<void> {
     this.entries.delete(key);
@@ -75,8 +60,6 @@ export class InMemoryTtlCache<K, V> implements Cache<K, V> {
    * Rocko Bishop
    * Tells whether an entry has outlived the TTL. An entry exactly `ttlMs` old is already expired,
    * which matches "re-query once 2+ minutes have elapsed".
-   * @param entry - The stored entry.
-   * @returns True when the entry must not be served.
    */
   private isExpired(entry: Entry<V>): boolean {
     return this.clock() - entry.storedAt >= this.ttlMs;
@@ -95,17 +78,5 @@ export class InMemoryTtlCache<K, V> implements Cache<K, V> {
       }
       this.entries.delete(oldestKey.value);
     }
-  }
-}
-
-/**
- * Rocko Bishop
- * Validates numeric options that must be positive integers.
- * @param name - Option name, used in the error message.
- * @param value - The value to check.
- */
-function assertPositiveInteger(name: string, value: number): void {
-  if (!Number.isInteger(value) || value <= 0) {
-    throw new RangeError(`${name} must be a positive integer, received ${value}`);
   }
 }

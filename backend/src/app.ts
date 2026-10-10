@@ -21,8 +21,6 @@ export interface BuildAppOptions {
  * Rocko Bishop
  * Builds a fully configured Fastify app without listening, so tests can drive it in-process with
  * `inject` and the server entry point can own the network and process lifecycle.
- * @param options - Config, a service factory and optional logger settings.
- * @returns A ready-to-listen Fastify instance.
  */
 export async function buildApp(options: BuildAppOptions): Promise<FastifyInstance> {
   const app = Fastify({

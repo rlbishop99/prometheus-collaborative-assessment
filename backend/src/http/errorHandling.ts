@@ -14,7 +14,6 @@ const GENERIC_SERVER_ERROR = 'An unexpected error occurred. Please try again lat
  * Rocko Bishop
  * Installs the global error and not-found handlers. Every failure leaves the API as an RFC 7807
  * response, and no handler needs its own try/catch.
- * @param app - The Fastify instance to configure.
  */
 export function registerErrorHandling(app: FastifyInstance): void {
   app.setErrorHandler(handleError);
@@ -25,10 +24,6 @@ export function registerErrorHandling(app: FastifyInstance): void {
  * Rocko Bishop
  * Central error mapping: known application errors keep their status, framework 4xx errors keep
  * theirs, and anything else becomes a generic 500 whose details are logged but never sent.
- * @param error - Whatever was thrown.
- * @param request - The failing request.
- * @param reply - The reply to send the problem on.
- * @returns The reply.
  */
 function handleError(
   error: FastifyError | Error,
@@ -50,13 +45,6 @@ function handleError(
   return sendProblem(reply, problemFromStatus(500, GENERIC_SERVER_ERROR, request.url));
 }
 
-/**
- * Rocko Bishop
- * Answers unknown routes with a 404 problem rather than Fastify's default body shape.
- * @param request - The unmatched request.
- * @param reply - The reply.
- * @returns The reply.
- */
 function handleNotFound(request: FastifyRequest, reply: FastifyReply): FastifyReply {
   return sendProblem(
     reply,
@@ -68,8 +56,6 @@ function handleNotFound(request: FastifyRequest, reply: FastifyReply): FastifyRe
  * Rocko Bishop
  * Logs application errors at a severity that matches who is at fault: upstream trouble is a
  * warning operators should see, while client mistakes are informational.
- * @param request - The failing request, whose logger carries the request id.
- * @param error - The application error.
  */
 function logAppError(request: FastifyRequest, error: AppError): void {
   const details = { err: error, status: error.status };
@@ -84,8 +70,6 @@ function logAppError(request: FastifyRequest, error: AppError): void {
  * Rocko Bishop
  * Extracts the status of a framework-raised client error (malformed URL, unsupported media type,
  * ...), which is safe to report as-is.
- * @param error - The thrown value.
- * @returns A 4xx status, or undefined when the error is not a client error.
  */
 function frameworkClientStatus(error: FastifyError | Error): number | undefined {
   const status = 'statusCode' in error ? error.statusCode : undefined;

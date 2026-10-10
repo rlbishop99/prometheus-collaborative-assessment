@@ -29,9 +29,6 @@ export const defaultFetchWithRetryDeps: FetchWithRetryDeps = {
  * Performs a GET with a per-attempt timeout and capped retries on transient failures (network
  * errors, timeouts, 408/429/5xx). Every other response, including 4xx, is returned to the caller
  * to interpret.
- * @param request - URL, headers and per-attempt timeout.
- * @param policy - Retry cap and backoff bounds.
- * @param deps - Injectable fetch, sleep and randomness.
  * @returns The final HTTP response, which may itself be a retryable status once retries run out.
  */
 export async function fetchWithRetry(
@@ -64,9 +61,6 @@ export async function fetchWithRetry(
  * Rocko Bishop
  * Runs a single GET bounded by its own timeout signal, so a hung connection cannot consume the
  * retry budget of the attempts after it.
- * @param request - URL, headers and timeout.
- * @param fetchFn - The fetch implementation.
- * @returns The HTTP response for this attempt.
  */
 function attemptFetch(request: HttpGetRequest, fetchFn: typeof fetch): Promise<Response> {
   return fetchFn(request.url, {
@@ -80,7 +74,6 @@ function attemptFetch(request: HttpGetRequest, fetchFn: typeof fetch): Promise<R
  * Rocko Bishop
  * Releases the body of a response that is about to be retried, so the underlying connection can be
  * reused. Failures are ignored, because the response is being discarded anyway.
- * @param response - The response to drain.
  */
 async function discardBody(response: Response): Promise<void> {
   try {

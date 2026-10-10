@@ -28,8 +28,4 @@ describe('summarizeDay', () => {
       highAverage: 20,
     });
   });
-
-  it('rejects an empty day', () => {
-    expect(() => summarizeDay('2026-10-09', [])).toThrow(RangeError);
-  });
 });

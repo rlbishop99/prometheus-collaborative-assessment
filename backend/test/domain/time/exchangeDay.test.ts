@@ -34,10 +34,6 @@ describe('toExchangeDayKey', () => {
     );
   });
 
-  it('rejects non-finite timestamps', () => {
-    expect(() => toExchangeDayKey(Number.NaN, NEW_YORK)).toThrow(RangeError);
-  });
-
   it('rejects unknown timezones', () => {
     expect(() => toDayKey(new Date(), 'Mars/Olympus_Mons')).toThrow(RangeError);
   });

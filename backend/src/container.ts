@@ -7,7 +7,8 @@ import { defaultFetchWithRetryDeps } from './infra/http/fetchWithRetry.js';
 import type { FetchWithRetryDeps } from './infra/http/fetchWithRetry.js';
 import type { Logger } from './infra/logging/logger.js';
 import { YahooChartProvider } from './providers/yahoo/yahooChartProvider.js';
-import type { DailySummaries, DailySummaryReader } from './services/dailySummaryService.js';
+import type { DailySummaries } from './domain/types.js';
+import type { DailySummaryReader } from './services/dailySummaryService.js';
 import { DailySummaryService } from './services/dailySummaryService.js';
 
 /** Everything the HTTP layer needs. New use cases are added here as the API grows. */
@@ -25,10 +26,6 @@ export interface ContainerOverrides {
  * Rocko Bishop
  * Composition root: the one place that knows the concrete classes and wires them together, so
  * every other module depends only on abstractions.
- * @param config - Validated application config.
- * @param logger - Logger for best-effort failures (e.g. the cache).
- * @param overrides - Optional test seams for network and time.
- * @returns The application services.
  */
 export function createAppServices(
   config: AppConfig,

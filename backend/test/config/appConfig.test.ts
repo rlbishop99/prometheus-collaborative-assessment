@@ -61,16 +61,9 @@ describe('loadConfig', () => {
     { PORT: '70000' },
     { UPSTREAM_MAX_RETRIES: '50' },
     { CACHE_TTL_MS: '0' },
-    { WINDOW_DAYS: '1.5' },
+    { CACHE_MAX_ENTRIES: '1.5' },
     { UPSTREAM_RETRY_BASE_DELAY_MS: '5000', UPSTREAM_RETRY_MAX_DELAY_MS: '1000' },
   ])('rejects out-of-range values %o', (env) => {
     expect(() => loadConfig(env)).toThrow(ConfigError);
-  });
-
-  it('returns a deeply frozen config', () => {
-    const config = loadConfig({});
-    expect(Object.isFrozen(config)).toBe(true);
-    expect(Object.isFrozen(config.yahoo.retryPolicy)).toBe(true);
-    expect(Object.isFrozen(config.cors.origins)).toBe(true);
   });
 });

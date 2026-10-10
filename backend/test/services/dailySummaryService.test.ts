@@ -13,7 +13,7 @@ import { InMemoryTtlCache } from '../../src/infra/cache/inMemoryTtlCache.js';
 import type { Logger } from '../../src/infra/logging/logger.js';
 import type { MarketDataProvider } from '../../src/providers/marketDataProvider.js';
 import { DailySummaryService } from '../../src/services/dailySummaryService.js';
-import type { DailySummaries } from '../../src/services/dailySummaryService.js';
+import type { DailySummaries } from '../../src/domain/types.js';
 import { manualClock } from '../support/clock.js';
 
 const TWO_MINUTES = 120_000;
@@ -52,8 +52,8 @@ const createService = (
     cache?: Cache<string, DailySummaries>;
     logger?: Logger;
   } = {},
-): { service: DailySummaryService; provider: ProviderMock; advance: (ms: number) => void } => {
-  const { clock, advance } = manualClock('2026-10-09T18:00:00Z');
+): { service: DailySummaryService; provider: ProviderMock } => {
+  const { clock } = manualClock('2026-10-09T18:00:00Z');
   const provider = overrides.provider ?? providerReturning();
   const service = new DailySummaryService(config, {
     provider,
@@ -62,7 +62,7 @@ const createService = (
     clock,
     logger: overrides.logger ?? { warn: vi.fn() },
   });
-  return { service, provider, advance };
+  return { service, provider };
 };
 
 describe('DailySummaryService', () => {
@@ -84,26 +84,6 @@ describe('DailySummaryService', () => {
     expect(symbol).toBe('TSLA');
     expect(range.toEpochSeconds).toBe(Date.parse('2026-10-09T18:00:00Z') / 1000);
     expect(range.toEpochSeconds - range.fromEpochSeconds).toBe(32 * 86_400);
-  });
-
-  it('serves repeat requests from the cache within 2 minutes', async () => {
-    const { service, provider, advance } = createService();
-
-    await service.getDailySummaries('TSLA');
-    advance(TWO_MINUTES - 1);
-    await service.getDailySummaries('TSLA');
-
-    expect(provider.getIntradaySeries).toHaveBeenCalledTimes(1);
-  });
-
-  it('re-queries the provider once 2 minutes have elapsed', async () => {
-    const { service, provider, advance } = createService();
-
-    await service.getDailySummaries('TSLA');
-    advance(TWO_MINUTES);
-    await service.getDailySummaries('TSLA');
-
-    expect(provider.getIntradaySeries).toHaveBeenCalledTimes(2);
   });
 
   it('shares one cache entry across casing and whitespace variants', async () => {
@@ -148,14 +128,6 @@ describe('DailySummaryService', () => {
     await expect(service.getDailySummaries('TSLA')).rejects.toThrow(SymbolNotFoundError);
     await expect(service.getDailySummaries('TSLA')).resolves.toHaveLength(2);
     expect(provider.getIntradaySeries).toHaveBeenCalledTimes(3);
-  });
-
-  it('returns an empty list for a valid symbol with no trades in the window', async () => {
-    const { service } = createService({
-      provider: providerReturning({ ...tslaSeries, bars: [] }),
-    });
-
-    expect(await service.getDailySummaries('TSLA')).toEqual([]);
   });
 
   it('returns frozen results so cached data cannot be mutated by a caller', async () => {

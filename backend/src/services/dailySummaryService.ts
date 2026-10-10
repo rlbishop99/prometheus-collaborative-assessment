@@ -1,14 +1,12 @@
 import { buildDailySummaries } from '../domain/aggregation/buildDailySummaries.js';
 import { parseSymbol } from '../domain/symbol.js';
 import { computeFetchRange, computeWindowStartDayKey } from '../domain/time/tradingWindow.js';
-import type { DailySummary } from '../domain/types.js';
+import type { DailySummaries, DailySummary } from '../domain/types.js';
 import type { Cache } from '../infra/cache/cache.js';
-import type { InFlightDeduper } from '../infra/cache/inFlightDeduper.js';
+import type { RequestCoalescer } from '../infra/cache/requestCoalescer.js';
 import type { Clock } from '../infra/clock.js';
 import type { Logger } from '../infra/logging/logger.js';
 import type { MarketDataProvider } from '../providers/marketDataProvider.js';
-
-export type DailySummaries = readonly DailySummary[];
 
 /** What the HTTP layer depends on: the use case only, not the concrete service. */
 export interface DailySummaryReader {
@@ -25,7 +23,7 @@ export interface DailySummaryServiceConfig {
 export interface DailySummaryServiceDeps {
   readonly provider: MarketDataProvider;
   readonly cache: Cache<string, DailySummaries>;
-  readonly deduper: InFlightDeduper<string, DailySummaries>;
+  readonly deduper: RequestCoalescer<string, DailySummaries>;
   readonly clock: Clock;
   readonly logger: Logger;
 }
@@ -35,12 +33,6 @@ export interface DailySummaryServiceDeps {
  * request coalescing, the provider and aggregation, and owns none of their logic itself.
  */
 export class DailySummaryService implements DailySummaryReader {
-  /**
-   * Rocko Bishop
-   * Creates the service from its collaborators; every dependency is an abstraction or a value.
-   * @param config - Window sizing.
-   * @param deps - Provider, cache, deduper, clock and logger.
-   */
   constructor(
     private readonly config: DailySummaryServiceConfig,
     private readonly deps: DailySummaryServiceDeps,
@@ -50,8 +42,6 @@ export class DailySummaryService implements DailySummaryReader {
    * Rocko Bishop
    * Returns the summaries for a symbol from the cache when fresh. Otherwise it fetches them, with
    * concurrent identical requests sharing one upstream call. Only successful results are cached.
-   * @param rawSymbol - Untrusted symbol input; normalized and validated here.
-   * @returns Frozen per-day summaries, ascending by day.
    */
   async getDailySummaries(rawSymbol: unknown): Promise<DailySummaries> {
     const symbol = parseSymbol(rawSymbol);
@@ -66,8 +56,6 @@ export class DailySummaryService implements DailySummaryReader {
    * Rocko Bishop
    * Fetches upstream, aggregates and stores the result. The window is anchored to a single `now`,
    * so the fetch range and the trim boundary always agree.
-   * @param symbol - Normalized symbol.
-   * @returns Frozen per-day summaries.
    */
   private async fetchAndCache(symbol: string): Promise<DailySummaries> {
     const now = new Date(this.deps.clock());
@@ -83,8 +71,6 @@ export class DailySummaryService implements DailySummaryReader {
    * Rocko Bishop
    * Reads the cache. The cache is an optimization, so a failure is logged and treated as a miss
    * rather than failing the request.
-   * @param symbol - Normalized symbol.
-   * @returns The cached summaries, or undefined on a miss or a cache failure.
    */
   private async readCache(symbol: string): Promise<DailySummaries | undefined> {
     try {
@@ -99,8 +85,6 @@ export class DailySummaryService implements DailySummaryReader {
    * Rocko Bishop
    * Writes the cache. A failure is logged and swallowed, because the caller already has fresh data
    * to return.
-   * @param symbol - Normalized symbol.
-   * @param summaries - The value to cache.
    */
   private async writeCache(symbol: string, summaries: DailySummaries): Promise<void> {
     try {
@@ -115,8 +99,6 @@ export class DailySummaryService implements DailySummaryReader {
  * Rocko Bishop
  * Deep-freezes the summaries. The same instance is shared by every caller that hits the cache, so
  * one consumer's mutation must never leak into another's response.
- * @param summaries - Freshly built summaries.
- * @returns The same data, immutable.
  */
 function freezeSummaries(summaries: DailySummary[]): DailySummaries {
   return Object.freeze(summaries.map((summary) => Object.freeze({ ...summary })));
