@@ -277,6 +277,41 @@ Manual (non-AI) changes are recorded in the final section.
 
 ---
 
+## Entry 18 - Build step 7: API client, search state machine, session cache, hook (2026-10-10)
+
+**Prompt:** "Step 6 has been committed -- time to begin Step 7."
+
+**Why:** Implement the frontend data layer: talking to the API, classifying failures, the 2-minute re-search rule, and keeping data on screen during outages.
+
+**Outcome:**
+- `api/`: `DailySummaryClient` interface with an HTTP implementation. Zod validates the success body. The caller's abort and the client's own timeout are combined with `AbortSignal.any`. Failures are classified into `invalidInput` (400), `notFound` (404 **with** the symbol-not-found problem type; a bare 404 is `unknown`, mirroring the backend's guard), `unreachable` (network, timeout, 502-504) and `unknown`. A caller abort propagates as an AbortError so it is ignored, never shown.
+- `state/`: a pure reducer state machine (`idle`, `loading`, `success`, `error`) with request ids, so late responses from superseded searches are dropped. `SessionCache` keeps entries **after** they go stale (stale data is what gets retained under the warning; freshness only decides whether to hit the network) and is size-bounded.
+- `useSymbolSearch`: validates input client-side, serves a re-search under 2 minutes with no request, cancels superseded requests and aborts on unmount.
+- `content/warningMessages.ts`: all user-facing copy in one place, including the exact agreed text "Error: Symbol API currently unreachable".
+- `config.ts`: the request timeout is 25 s, deliberately longer than the backend's worst case (3 upstream attempts x 5 s plus backoff, about 19 s), so the backend can return its own 503 rather than the browser giving up first.
+- **Behavior decisions made by the AI, flagged for confirmation:**
+  1. Retained data applies to the **same symbol only**. Searching NVDA during an outage shows "---" plus the banner, never TSLA's numbers.
+  2. Both `unreachable` and `unknown` failures retain data ("API not serving proper data"); `notFound` and invalid input do not.
+  3. Invalid input clears the cells to "---", because there is no valid symbol for the data to belong to.
+  4. Draft wording for the non-outage warnings (empty, malformed, not found, unknown), since the exact text was deferred to implementation.
+- AI self-corrections: moved a class field declaration above the constructor, and dropped Zod 4's deprecated `.finite()`.
+- 104 frontend tests (78 new) plus 203 backend tests pass. Typecheck, lint, format and build are clean.
+
+---
+
+## Entry 19 - Approving step 7 behavior and finalizing warning copy (2026-10-10)
+
+**Prompt (summarized):** Approved the AI's decisions 1-3 (same-symbol retention only; retain on unreachable or unknown but not on not-found or invalid input; invalid input clears the cells). Replaced the AI's draft copy with my own wording for the empty, malformed, not-found and other-error warnings.
+
+**Why:** User-facing copy and behavior are product decisions I own.
+
+**Outcome:**
+- Kept: decisions 1-3 unchanged.
+- Changed: all four messages now use my wording. The tests assert each string exactly, so any future copy drift fails the suite.
+- AI edits to my wording, flagged for my review: corrected the typo "wen't" to "went"; "[input string]" is filled with the normalized symbol (` zzzz ` reads as `ZZZZ`) because that is what was actually searched.
+
+---
+
 ## Manual changes (outside AI)
 
 - **2026-10-10, `backend/src/infra/http/fetchWithRetry.ts`:** I added a blank line inside `HttpGetRequest`. It contained trailing whitespace, which failed Prettier and `.editorconfig`. The AI flagged it before drafting the step 4 commit message, and I reverted it to keep the codebase format-clean. Net change: none.
