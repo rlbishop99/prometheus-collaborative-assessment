@@ -25,9 +25,19 @@ npm run dev --workspace backend        # or: cd backend && npm run dev
 # Production
 npm run build --workspace backend
 npm start --workspace backend
+
+# Or run the API and the UI together from the repo root
+npm run dev          # development
+npm run build && npm start   # production build (UI on http://localhost:4173)
 ```
 
 The API listens on `http://127.0.0.1:3000` by default.
+
+**Port already in use?** Startup fails with `EADDRINUSE`, and when started from the root, `npm run dev` / `npm start` stop the UI too, rather than leaving it half-running. Pick another port and point the UI's proxy at it:
+
+```bash
+PORT=3123 API_PROXY_TARGET=http://127.0.0.1:3123 npm run dev
+```
 
 ## Try it
 

@@ -22,6 +22,7 @@ Every AI output was reviewed before it was committed. These are the points where
 | 23-24 | Step 9 scroll-to-top and accessibility pass (2 screenshots plus keyboard testing) | Approved the invalid-input border and back-to-top button; **questioned** the calendar's keyboard behavior (Tab skips the days) |
 | 25 | Calendar keyboard options | Chose hint plus Tab containment, **and found a bug**: tabbing to the browser URL bar left the calendar open |
 | 26 | Keyboard reachability of the metric cells | **Found a gap**: the trend explanation was hover-only, invisible to sighted keyboard and touch users; chose a visible caption; asked how blind users consume the cells |
+| 27 | README, setup docs and the final log pass | Reviewed and approved |
 
 ---
 
@@ -462,6 +463,32 @@ Every AI output was reviewed before it was committed. These are the points where
 
 ---
 
+## Entry 27 - Build step 10: documentation and final pass (2026-10-10)
+
+**Prompt:** "Alright, it is time to begin Step 10 and wrap this up before we move onto styling!"
+
+**Why:** The brief requires a README that lets a reviewer build and run both apps, plus the prompt log and the manual-change notes.
+
+**Outcome:**
+- **Verified before documenting:** the AI cloned the committed repo into a scratch directory and ran `npm ci`, `npm test` (418 passing), `lint`, `typecheck` and `build` from scratch, so the README describes what a reviewer will actually experience.
+- Added a root `npm start` to run the production build (API plus Vite preview, which also proxies `/api`), verified end to end with live MSFT data.
+- The first `npm start` smoke test collided with a server already on port 3000. The script failed safely (`EADDRINUSE`, with the UI shut down by `--kill-others-on-fail`); the AI reran on spare ports instead of touching the other process, and documented the port override in `backend/setup.md`.
+- The AI repeated an earlier mistake (a `pgrep -f` pattern matching its own shell, which left test servers running). It caught this from the exit code, found the processes by exact name, and stopped them by PID.
+- **AI self-correction:** its README draft contained an invented example row (a second TSLA day it had never received). It was caught on read-back and replaced with two real MSFT rows captured from the live smoke test.
+- Docs written or updated:
+  - `README.md`: overview, quick start, command table, API reference with an error table, how each open question in the brief was resolved, architecture, testing, accessibility, AI collaboration, and known limitations.
+  - `frontend/setup.md` (new) and `backend/setup.md` (root commands, port conflicts).
+  - `CLAUDE.md`: decisions from steps 7-9.
+  - This log: the Manual changes section now records my mockups, commit authorship and format, and QA work.
+- Reviewed and approved by me ("This looks good to me").
+
+---
+
 ## Manual changes (outside AI)
 
+Work I did myself, outside the AI, and why:
+
+- **UI mockups (`Mockups for Symbol Search App/`):** I drew all 8 mockups (4 desktop, 4 mobile: before search, results, new-session failure, same-session failure) before any UI code existed, so the AI implemented my design rather than inventing one.
+- **All git operations and commit messages:** I made every commit myself after reviewing each step. The AI drafted messages on request, but for the first commit I **rewrote its suggested title format** (`feat(backend): ...`) into my own convention, `Feature/<Area>-Implementation: <summary>`, and the AI adopted it for every later draft. Keeping commits manual meant nothing reached the history without my sign-off.
+- **Visual and keyboard QA:** I ran the app in my browser after each UI step, testing desktop, mobile width and keyboard-only use, and reported the issues in Entries 21, 22, 24, 25 and 26 with screenshots. I declined the AI's offer to install a headless browser for its own screenshots, so that this review stayed with me.
 - **2026-10-10, `backend/src/infra/http/fetchWithRetry.ts`:** I added a blank line inside `HttpGetRequest`. It contained trailing whitespace, which failed Prettier and `.editorconfig`. The AI flagged it before drafting the step 4 commit message, and I reverted it to keep the codebase format-clean. Net change: none.

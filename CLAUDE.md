@@ -38,6 +38,15 @@ Layout: `backend/` and `frontend/`, each with its own `setup.md`. Root has `READ
 - Warnings: one shared Warning component. Unreachable API shows "Error: Symbol API currently unreachable" and keeps the last good data in-session. After a refresh during an outage, cells show "---". Invalid symbol and malformed input get separate warnings.
 - All imagery (logo, arrows, indicators) is colored SVG. Add WAI-ARIA where needed. Style with CSS modules only.
 
+**Decided during implementation (steps 7-9)**
+- Retained data is for the **same symbol only**. `unreachable` and `unknown` failures retain it; `notFound` and invalid input do not. Invalid input clears the cells to "---".
+- User-facing copy is **user-authored** and lives in `frontend/src/content/`, pinned by exact-string tests. Never reword it without asking. A valid symbol with zero trading days shows "No trading data found for X in the last 30 days."
+- Date picker is a **popover** under its trigger, on desktop and mobile. On mobile the search form fills the first toolbar row, so the trigger always starts the next row at the left edge.
+- Calendar keyboard follows the WAI-ARIA date-picker pattern: arrow keys between days, Tab contained in the dialog, a visible keyboard hint, and it closes on any loss of focus, including window blur.
+- Trend comparisons are a **visible caption** ("Higher than Oct 9th") with a decorative glyph, never hover-only. Read-only cells are not Tab stops.
+- Mobile back-to-top button appears after scrolling, honors reduced motion, and moves focus to `main`.
+- The user does all visual and keyboard QA in their own browser; there is no headless browser. A styling pass is planned after implementation: confine it to `styles/tokens.css` and the `*.module.css` files.
+
 ## Tenets
 
 1. **Resilience.** Cover edge cases within reason. Null-guard inputs, handle anticipated exceptions with try/catch/finally, and give every branch a defined fallback. Never swallow errors silently: fall back *and* surface or log the failure with a typed error.

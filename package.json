@@ -15,6 +15,7 @@
     "dev:backend": "npm run dev --workspace backend",
     "dev:frontend": "npm run dev --workspace frontend",
     "build": "npm run build --workspaces",
+    "start": "concurrently --names api,web --prefix-colors blue,magenta --kill-others-on-fail \"npm start --workspace backend\" \"npm run preview --workspace frontend\"",
     "test": "npm run test --workspaces",
     "typecheck": "npm run typecheck --workspaces",
     "lint": "eslint .",
