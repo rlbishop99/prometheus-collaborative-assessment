@@ -216,6 +216,23 @@ Manual (non-AI) changes are recorded in the final section.
 
 ---
 
+## Entry 15 - Build step 4: cache, request coalescing and service (2026-10-10)
+
+**Prompt:** "Now we're ready for Step 4: Caching, duplicate-request guards, and the service."
+
+**Why:** Implement the agreed 2-minute cache and protect Yahoo from bursts of identical requests, behind one orchestrating use-case class.
+
+**Outcome:**
+- `Cache<K,V>` is an **async** interface, even though the first implementation is in-memory, so a Redis-backed cache can replace it for multi-instance scaling without touching the service.
+- `InMemoryTtlCache`: 2-minute TTL with no stale serving. An entry exactly 2:00 old is expired, matching "2+ minutes re-queries". **Bounded size** with oldest-first eviction, so memory stays flat as more symbols are searched. Injectable clock.
+- `InFlightDeduper`: concurrent cold requests for one symbol share a single Yahoo call. Failures are shared with the waiters, but never replayed afterwards.
+- `DailySummaryService`: orchestration only. It treats the cache as best-effort (read or write failures are logged and the request still succeeds), caches only successes, and deep-freezes results so a shared cached instance cannot be mutated by one caller.
+- Plan deviation (AI proposal): symbol normalization and validation moved from the HTTP layer to `domain/symbol.ts`, and the service applies it. Every entry point then shares one cache key per symbol (`tsla` = ` TSLA `).
+- **Real bug caught by a test:** in the first draft of `InFlightDeduper`, a task that threw *synchronously* triggered `finally` before the promise was registered. That would have left a permanently rejected entry, so every later request for that symbol would fail forever. Fixed by starting the task on the next microtask; the test now guards against regression.
+- 169 tests passing (49 new). Lint errors about unbound mock methods were fixed by typing the test doubles with properties.
+
+---
+
 ## Manual changes (outside AI)
 
 _None yet._
