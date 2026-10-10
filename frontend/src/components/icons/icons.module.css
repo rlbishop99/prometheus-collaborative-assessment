@@ -1,0 +1,34 @@
+.icon {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+/* Each icon owns its semantic color; shapes use currentColor so one token drives them. */
+.trendUp {
+  color: var(--color-trend-up);
+}
+
+.trendDown {
+  color: var(--color-trend-down);
+}
+
+.trendNeutral {
+  color: var(--color-trend-neutral);
+}
+
+.warning {
+  color: var(--color-warning-icon);
+}
+
+.warningGlyph {
+  color: var(--color-warning-glyph);
+}
+
+.brand {
+  color: var(--color-brand);
+}
+
+.brandAccent {
+  color: var(--color-brand-accent);
+}

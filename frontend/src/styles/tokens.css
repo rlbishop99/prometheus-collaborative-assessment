@@ -1,0 +1,102 @@
+/*
+ * Design tokens: the single source of truth for color, spacing, type and shape. Components
+ * reference these variables only, never raw values, so restyling or theming is a one-file change.
+ * Layout breakpoint (CSS variables cannot be used in media queries): 768px.
+ */
+:root {
+  color-scheme: light dark;
+
+  /* Surfaces and text */
+  --color-bg: #f4f6f8;
+  --color-surface: #ffffff;
+  --color-surface-muted: #eef1f4;
+  --color-border: #d4d9df;
+  --color-border-strong: #9aa3ad;
+  --color-text: #1b2430;
+  --color-text-muted: #5b6673;
+
+  /* Brand */
+  --color-brand: #0f766e;
+  --color-brand-strong: #115e59;
+  --color-brand-accent: #14b8a6;
+  --color-on-brand: #ffffff;
+  --color-focus-ring: #2563eb;
+
+  /* Trend indicators */
+  --color-trend-up: #15803d;
+  --color-trend-down: #b91c1c;
+  --color-trend-neutral: #6b7280;
+
+  /* Warning banner */
+  --color-warning-icon: #ca8a04;
+  /* The "!" sits on the yellow triangle, so it stays dark in both themes. */
+  --color-warning-glyph: #1b2430;
+  --color-warning-bg: #fefce8;
+  --color-warning-border: #9aa3ad;
+  --color-warning-text: #422006;
+
+  /* Spacing scale (4px base) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  /* Typography */
+  --font-sans:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.75rem;
+  --font-size-metric: clamp(1.75rem, 1.2rem + 2vw, 2.5rem);
+  --font-weight-regular: 400;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height-tight: 1.2;
+  --line-height-body: 1.5;
+
+  /* Shape and depth */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 6%), 0 1px 3px rgb(16 24 40 / 10%);
+  --border-width: 1px;
+
+  /* Layout */
+  --sidebar-width: 220px;
+  --content-max-width: 960px;
+  --transition-fast: 120ms ease-out;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0f141a;
+    --color-surface: #171e26;
+    --color-surface-muted: #1f2833;
+    --color-border: #2c3744;
+    --color-border-strong: #4a5868;
+    --color-text: #e6ebf0;
+    --color-text-muted: #9aa6b2;
+
+    --color-brand: #2dd4bf;
+    --color-brand-strong: #5eead4;
+    --color-brand-accent: #99f6e4;
+    --color-on-brand: #042f2e;
+    --color-focus-ring: #60a5fa;
+
+    --color-trend-up: #4ade80;
+    --color-trend-down: #f87171;
+    --color-trend-neutral: #9ca3af;
+
+    --color-warning-icon: #facc15;
+    --color-warning-bg: #2a2410;
+    --color-warning-border: #4a5868;
+    --color-warning-text: #fef9c3;
+
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 40%);
+  }
+}

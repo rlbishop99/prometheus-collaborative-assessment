@@ -1,5 +1,7 @@
 import js from '@eslint/js';
 import prettier from 'eslint-config-prettier';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
@@ -23,6 +25,15 @@ export default tseslint.config(
   {
     files: ['backend/**/*.ts'],
     languageOptions: { globals: globals.node },
+  },
+  {
+    files: ['frontend/**/*.{ts,tsx}'],
+    languageOptions: { globals: globals.browser },
+    ...reactHooks.configs.flat['recommended-latest'],
+  },
+  {
+    files: ['frontend/src/**/*.tsx'],
+    ...reactRefresh.configs.vite,
   },
   {
     files: ['**/*.js'],

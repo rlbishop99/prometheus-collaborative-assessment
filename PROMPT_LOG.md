@@ -256,6 +256,27 @@ Manual (non-AI) changes are recorded in the final section.
 
 ---
 
+## Entry 17 - Build step 6: frontend scaffold (2026-10-10)
+
+**Prompt:** "Alright, let's begin the front-end scaffolding. Initiate Step 6 per the plan!"
+
+**Why:** Stand up the React workspace, design system and page frame that the data-driven components (steps 7-9) will slot into.
+
+**Outcome:**
+- Versions checked before install (Vite 8, React 19, plugin-react 6, whose extra peers are optional, and Vitest 5, which supports Vite 8). No conflicts; 0 vulnerabilities.
+- Root `npm run dev` now starts the API and the UI together through `concurrently`. The Vite dev proxy forwards `/api`, so development needs no CORS. Verified: AAPL data was served through `localhost:5173/api/...`, and one Ctrl+C stops both servers and frees both ports.
+- `styles/tokens.css`: all colors, spacing, type and shape as CSS variables, with a dark theme via `prefers-color-scheme`. The global CSS adds focus rings, a `.visually-hidden` helper and reduced-motion support.
+- Icons: a single `SvgIcon` base owns the accessibility rule (labelled means `role="img"`, otherwise `aria-hidden`). Arrow up and down, neutral dot, warning, search and the logo mark are all colored SVGs driven by tokens, plus an SVG favicon.
+- `AppShell`: one CSS grid with named areas implements both mockup layouts (desktop sidebar, mobile header row) without rendering anything twice. Banner, sidebar and main landmarks, a single `h1`, and a skip link to a focusable `main`.
+- **AI self-corrections during the step:**
+  1. The first draft of the icons repeated class-joining logic in every icon. It was extracted to `utils/joinClassNames` for DRY.
+  2. `WarningIcon` hard-coded hex colors, against the "tokens only" rule. A `--color-warning-glyph` token was added.
+  3. Tests caught that multi-word CSS-module classes vanished under Vitest, because `test.css.modules` overrides Vite's `localsConvention`. Fixed by writing camelCase class names directly, so dev, build and test behave identically.
+  4. While smoke-testing, the AI's cleanup command reported the servers stopped when they were still running (a `setsid` PID mix-up). It re-checked the ports, found them still bound, and stopped them correctly.
+- Tests live in `frontend/test/`, mirroring the backend's layout. 26 frontend tests plus 203 backend tests pass. Typecheck, lint, format and the production build (69 KB gzipped JS) are clean.
+
+---
+
 ## Manual changes (outside AI)
 
 - **2026-10-10, `backend/src/infra/http/fetchWithRetry.ts`:** I added a blank line inside `HttpGetRequest`. It contained trailing whitespace, which failed Prettier and `.editorconfig`. The AI flagged it before drafting the step 4 commit message, and I reverted it to keep the codebase format-clean. Net change: none.
