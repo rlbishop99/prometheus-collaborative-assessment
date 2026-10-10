@@ -3,6 +3,23 @@
 Log of AI prompts used during this assessment. Each entry: the prompt, why it was sent, and what was kept / changed / rejected.
 Manual (non-AI) changes are recorded in the final section.
 
+## Human review checkpoints
+
+Every AI output was reviewed before it was committed. These are the points where my review changed the result:
+
+| Entry | What I reviewed | My decision |
+|---|---|---|
+| 3-9 | Every spec ambiguity raised by the AI | I defined each rule myself (metrics, window, timezone, rounding, caching, errors, UI behavior) |
+| 5 | AI's reading of "canned data" as a runtime fallback | **Rejected**: canned data is for the test suite only |
+| 6 | AI's proposed backend stale-serving cache | **Rejected** to keep scope smaller; frontend retention only |
+| 9 | AI's native date input plus "No trading data" fallback | **Rejected**: weekends and holidays must be disabled in the picker |
+| 10 | AI's draft `CLAUDE.md` | Reviewed and approved |
+| 13 | Comment style | **Added my own convention**: contributor-tagged doc block on every method |
+| Manual changes | My own stray whitespace edit | Reverted after the AI flagged that it broke formatting |
+| 19 | AI-drafted warning copy | **Replaced** with my own wording |
+| 21 | Visual QA of the running app (5 screenshots) | **Found 3 issues**: mobile calendar clipped, logo line trending down, styling pass wanted |
+| 22 | Visual QA of the AI's first mobile calendar fix | **Rejected** the bottom-sheet fix; approved the anchored fix after a second screenshot |
+
 ---
 
 ## Entry 1 - Project kickoff and prework plan (2026-10-10)
@@ -309,6 +326,68 @@ Manual (non-AI) changes are recorded in the final section.
 - Kept: decisions 1-3 unchanged.
 - Changed: all four messages now use my wording. The tests assert each string exactly, so any future copy drift fails the suite.
 - AI edits to my wording, flagged for my review: corrected the typo "wen't" to "went"; "[input string]" is filled with the normalized symbol (` zzzz ` reads as `ZZZZ`) because that is what was actually searched.
+
+---
+
+## Entry 20 - Build step 8: search form, cells, indicators, picker, warning banner (2026-10-10)
+
+**Prompt:** "Step 7 has been committed. Let's begin Step 8 and tie it all together!"
+
+**Why:** Turn the data layer into the UI from the mockups.
+
+**Outcome:**
+- Two UX gaps in the mockups were put to me as questions instead of being assumed:
+  - Picker style: I chose a **popover** (compact trigger showing the date, calendar dropdown) over an always-visible calendar.
+  - Valid symbol with zero trading days: I chose a **new warning**, "No trading data found for X in the last 30 days."
+- AI checked react-day-picker 10's API in its type definitions before coding against it.
+- Domain helpers:
+  - `computeTrend`: exactly +/-1% counts as neutral; zero-baseline and non-finite guards.
+  - `formatDay`: `Oct 9th, 2026`, with ordinals from `Intl.PluralRules`, including 11th-13th.
+  - `formatNumber`: prices always show 4 decimals; volume grouped.
+  - `dayKey`: local-midnight conversion, so the picker never shifts a day west of UTC.
+- Components:
+  - `MetricCell` (a `dt`/`dd` pair; "---" is announced as "No data") and four thin field cells (`DayCell`, `VolumeCell`, `LowAverageCell`, `HighAverageCell`).
+  - `MetricGrid`: indicators only for days other than the latest.
+  - `TrendIndicator`: shape plus color, with an accessible label and tooltip such as "Higher than Oct 9th, 2026".
+  - `WarningBanner`: the one shared template, `role="alert"`.
+  - `SymbolSearchForm`: a `role="search"` landmark with a labelled input.
+  - `TradingDayPicker` with `usePopover`: Escape or an outside click closes it, focus returns to the trigger, and only days present in the data are enabled (weekends, holidays and out-of-window days are disabled, with navigation clamped to the window).
+- `selectDisplay` maps state to the screen in one tested place. `useSelectedDay` resets to the latest day on every new search, per the spec.
+- **Issues caught and fixed during the step:**
+  1. The React Compiler lint rules flagged ref reads through the popover object (fixed by destructuring), a manual memo they could not verify (removed, since mapping 31 days is trivial), and a non-component export that broke fast refresh (`describeTrend` moved to `content/`).
+  2. `FormEvent` is deprecated in `@types/react` 19.3; replaced by `SubmitEvent`.
+  3. **A real accessibility bug caught by a test:** the picker trigger's accessible name collapsed to "Trading day:Oct 9th", because a trailing space inside the visually hidden span was trimmed. Fixed with an explicit space node.
+  4. The AI assumed disabled month navigation used `disabled`; a probe showed react-day-picker uses `aria-disabled`, which is valid and keeps the buttons discoverable. The test was corrected, not the component.
+- App flows are tested end to end against the mockups: before search, results, an earlier day with indicators, reset on a new search, the cache hit at 1:59, the same-session outage keeping data, the new-session outage with placeholders, local rejection of empty or malformed input, not found, no data, and a warning clearing on success.
+- 185 frontend tests (80 new) plus 203 backend tests pass. Typecheck, lint, format and both builds are clean. The JS bundle is 117 KB gzipped (react-day-picker brings date-fns).
+
+---
+
+## Entry 21 - Visual QA feedback on step 8 (2026-10-10)
+
+**Prompt (summarized):** I ran the app and shared 5 screenshots (mobile not-found, desktop malformed input, desktop picker open, desktop earlier day with indicators, and the logo close-up). Issues: (1) the calendar popover is cut off on mobile; (2) the logo's line trends down before the arrowhead and should trend up into the arrowhead's center; (3) I want a visual-flair pass later, once implementation is complete. Functionality otherwise worked as expected.
+
+**Why:** The AI had no browser to check rendering, so I did the visual QA. Tests verify structure and behavior, not pixels.
+
+**Outcome:**
+- (1) AI root cause: on mobile, the search field grows and wraps the date trigger onto its own row at the left, while the CSS anchored the popover to the trigger's right edge, so it overflowed off-screen. **First fix (rejected by me in QA):** a viewport-fixed, centered bottom sheet. It was fully visible, but it opened far from its trigger and covered the cells. **Revised fix:** the AI made the layout deterministic instead (on mobile the search form always fills the first row, so the date trigger always starts the next row at the left edge) and anchored the calendar directly under the trigger, left-aligned, with a viewport width cap as a safety net and smaller day cells (about 278px wide, inside the 288px available on a 320px phone). Lesson: fix the root cause (unpredictable wrapping) rather than routing around it.
+- (2) The last segment ran from (22,9) down to (27,12) and missed the arrowhead. **Fix:** the line now climbs at 45 degrees and ends exactly on the arrowhead corner (28,6). The favicon was fixed the same way. The AI rasterized both SVGs with ImageMagick and inspected them before reporting.
+- **Extra bug found by the AI in my screenshots:** the calendar's selected-day ring and nav arrows were the library's default dark blue, low contrast on the dark theme. The token overrides were set on the panel, but react-day-picker declares its variables on `.rdp-root`, so its defaults won. **Fix:** overrides now target `.panel :global(.rdp-root)`; the higher specificity wins regardless of CSS load order (confirmed in the built CSS).
+- (3) Recorded as a pending styling pass. The AI will keep steps 9-10 to bugs and layout fixes, and raise the styling work after step 10.
+
+---
+
+## Entry 22 - Second visual QA round: rejecting the first mobile calendar fix (2026-10-10)
+
+**Prompt (summarized):** "Wait, apologies. Not quite. The calendar is visible now on mobile but it looks like the popout was justified to the bottom center." I attached a screenshot of the bottom sheet covering the lower cells, far from its date button. After the revision I attached a second screenshot: "Perfect, it looks exactly as expected."
+
+**Why:** I check every UI change in a real browser before committing. The AI cannot render the app, and passing tests do not mean the layout is right. I caught this after the AI had already drafted the step 8 commit message, and held the commit until it was fixed.
+
+**Outcome:**
+- **Rejected:** the AI's first fix for the clipped calendar (a viewport-fixed bottom sheet). It was fully visible, but disconnected from its trigger and it covered content.
+- **Accepted after re-review:** the AI addressed the root cause instead. On mobile the search form always fills the first row, so the date trigger always starts the next row at the left edge and the calendar can be anchored directly under it (left-aligned, width-capped). Confirmed by my second screenshot.
+- The AI updated Entry 21 and the step 8 commit message to describe the final fix rather than the rejected one.
+- Takeaway for the process: I keep doing visual QA myself (the AI offered to install headless Chromium for screenshots, and I declined), and no UI step is committed until I have seen it render correctly on desktop and mobile.
 
 ---
 

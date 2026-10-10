@@ -1,0 +1,15 @@
+.banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--color-warning-border);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+
+.message {
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}

@@ -1,0 +1,72 @@
+.picker {
+  position: relative;
+}
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 100%;
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.trigger:hover {
+  background: var(--color-surface-muted);
+}
+
+/* A dropdown anchored under the trigger, left-aligned with it. */
+.panel {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 0;
+  z-index: 20;
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: 0 10px 30px rgb(16 24 40 / 18%);
+}
+
+/*
+ * react-day-picker declares its variables on .rdp-root, so they must be overridden there; setting
+ * them on .panel would lose to the library's own declarations.
+ */
+.panel :global(.rdp-root) {
+  --rdp-accent-color: var(--color-brand);
+  --rdp-accent-background-color: var(--color-surface-muted);
+  --rdp-today-color: var(--color-brand);
+  --rdp-day-height: 2.5rem;
+  --rdp-day-width: 2.5rem;
+  --rdp-day_button-height: 2.375rem;
+  --rdp-day_button-width: 2.375rem;
+  --rdp-disabled-opacity: 0.35;
+  --rdp-nav_button-disabled-opacity: 0.3;
+}
+
+/*
+ * Mobile: still anchored under the trigger. The search form fills the first row (see
+ * SymbolSearchForm.module.css), so the trigger always sits at the left edge and a left-aligned
+ * panel opens toward the open side of the screen. The width cap is a safety net for very narrow
+ * viewports, and smaller day cells let the calendar fit a 320px phone.
+ */
+@media (max-width: 767px) {
+  .panel {
+    max-width: calc(100vw - 2 * var(--space-4));
+    overflow-x: auto;
+  }
+
+  .panel :global(.rdp-root) {
+    --rdp-day-height: 2.25rem;
+    --rdp-day-width: 2.25rem;
+    --rdp-day_button-height: 2.125rem;
+    --rdp-day_button-width: 2.125rem;
+  }
+}

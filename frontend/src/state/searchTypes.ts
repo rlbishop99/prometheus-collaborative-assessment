@@ -9,11 +9,12 @@ export interface SymbolData {
 }
 
 /**
- * Why a search did not produce fresh data. Server-side "invalid input" is folded into
- * `malformedInput`, so the user sees one consistent message whichever side caught it.
+ * Why a search did not produce usable data. Server-side "invalid input" is folded into
+ * `malformedInput`, so the user sees one consistent message whichever side caught it. `noData`
+ * is a successful search that returned zero trading days.
  */
 export type SearchFailureKind =
-  'emptyInput' | 'malformedInput' | 'notFound' | 'unreachable' | 'unknown';
+  'emptyInput' | 'malformedInput' | 'notFound' | 'noData' | 'unreachable' | 'unknown';
 
 export interface SearchFailure {
   readonly kind: SearchFailureKind;

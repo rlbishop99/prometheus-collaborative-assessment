@@ -1,0 +1,25 @@
+/* Desktop: search and picker on the left, the warning pushed to the right (see mockups). */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.warning {
+  margin-left: auto;
+}
+
+/* Mobile: search and picker share a row; the warning drops onto its own full-width row. */
+@media (max-width: 767px) {
+  .toolbar {
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+  }
+
+  .warning {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+}

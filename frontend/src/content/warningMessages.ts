@@ -18,6 +18,8 @@ export function warningMessageFor(failure: SearchFailure): string {
       return 'Invalid input found. Symbols use 1-15 letters, digits, or .-^=.';
     case 'notFound':
       return `No results found for ${failure.symbol ?? 'that symbol'}. Check the Symbol's spelling and try again.`;
+    case 'noData':
+      return `No trading data found for ${failure.symbol ?? 'that symbol'} in the last 30 days.`;
     case 'unreachable':
       return UNREACHABLE_MESSAGE;
     case 'unknown':

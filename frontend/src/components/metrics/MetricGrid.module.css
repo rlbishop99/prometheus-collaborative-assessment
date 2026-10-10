@@ -1,0 +1,14 @@
+/* Desktop: 2 x 2 as in the mockups. Mobile: one column. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+  margin: 0;
+}
+
+@media (max-width: 767px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+  }
+}
