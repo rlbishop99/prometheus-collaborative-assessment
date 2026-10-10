@@ -5,8 +5,6 @@ import { useEffect, useState } from 'react';
  * Reports whether the page is scrolled further down than `thresholdPx`. The scroll listener is
  * passive and coalesced to one check per animation frame, so scrolling stays smooth however
  * often the event fires.
- * @param thresholdPx - Scroll distance after which this returns true.
- * @returns True once the page is scrolled past the threshold.
  */
 export function useScrolledPast(thresholdPx: number): boolean {
   const [scrolledPast, setScrolledPast] = useState(false);

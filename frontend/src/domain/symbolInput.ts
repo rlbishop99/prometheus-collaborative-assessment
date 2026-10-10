@@ -15,8 +15,6 @@ export type SymbolInputResult =
  * Rocko Bishop
  * Normalizes what the user typed into a canonical symbol, or explains why it cannot be one.
  * Telling empty input apart from malformed input lets the UI show the right warning for each.
- * @param raw - The text from the search field.
- * @returns The upper-cased symbol, or the rejection reason.
  */
 export function parseSymbolInput(raw: string): SymbolInputResult {
   const symbol = raw.trim().toUpperCase();

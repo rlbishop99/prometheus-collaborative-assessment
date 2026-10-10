@@ -23,19 +23,6 @@ export const jsonResponse = (
 export const problemResponse = (status: number, type: string, detail = 'detail'): Response =>
   jsonResponse({ type, title: 'Problem', status, detail }, status, 'application/problem+json');
 
-/** A clock the test moves by hand. */
-export const manualClock = (
-  start = Date.parse('2026-10-09T18:00:00Z'),
-): { clock: () => number; advance: (ms: number) => void } => {
-  let now = start;
-  return {
-    clock: () => now,
-    advance: (ms) => {
-      now += ms;
-    },
-  };
-};
-
 /** Declared with a property so tests can reference the mock without unbound-method issues. */
 export interface ClientMock extends DailySummaryClient {
   readonly fetchDailySummaries: ReturnType<typeof vi.fn<DailySummaryClient['fetchDailySummaries']>>;

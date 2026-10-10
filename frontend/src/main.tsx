@@ -7,11 +7,6 @@ import { App } from './App';
 
 const ROOT_ELEMENT_ID = 'root';
 
-/**
- * Rocko Bishop
- * Mounts the app into the page. A missing root element is a deployment error, so it fails loudly
- * rather than rendering nothing.
- */
 function mount(): void {
   const container = document.getElementById(ROOT_ELEMENT_ID);
   if (!container) {

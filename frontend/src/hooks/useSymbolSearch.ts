@@ -3,74 +3,84 @@ import { useCallback, useEffect, useReducer, useRef } from 'react';
 import { isAbortError } from '../api/apiError';
 import type { DailySummaryClient } from '../api/dailySummaryClient';
 import { parseSymbolInput } from '../domain/symbolInput';
+import type { SymbolInputRejection } from '../domain/symbolInput';
 import { initialSearchState, searchReducer } from '../state/searchReducer';
-import type { SearchAction, SearchState } from '../state/searchTypes';
-import type { Clock, SessionCache } from '../state/sessionCache';
+import type { InputFailureKind, SearchAction, SearchState } from '../state/searchTypes';
+import type { SessionCache } from '../state/sessionCache';
 import { shouldRetainData, toSearchFailure } from '../state/toSearchFailure';
 
-/** Collaborators are injected, so the hook is testable without a network or real time. */
+/** Collaborators are injected, so the hook is testable without a network. */
 export interface SymbolSearchDeps {
   readonly client: DailySummaryClient;
   readonly cache: SessionCache;
-  readonly clock: Clock;
 }
 
 export interface SymbolSearch {
   readonly state: SearchState;
-  /** Starts a search for the raw input; safe to call repeatedly. */
-  readonly search: (rawInput: string) => void;
+  /**
+   * Starts a search for the raw input. Returns false when it was ignored because the same symbol
+   * is already loading; any other input replaces the running search.
+   */
+  readonly search: (rawInput: string) => boolean;
+}
+
+interface InFlightSearch {
+  readonly symbol: string;
+  readonly controller: AbortController;
 }
 
 /**
  * Rocko Bishop
- * Owns the search lifecycle: validate the input, serve fresh session data without a request,
- * otherwise fetch (cancelling any superseded request), cache successes, and on failure keep the
- * symbol's last good data when appropriate.
- * @param deps - API client, session cache and clock.
- * @returns The current state and a `search` function.
+ * Owns the search lifecycle: validate the input, fetch, remember successes, and on failure keep
+ * the symbol's last good data when appropriate. Freshness is the API's job, so every valid search
+ * makes a request. A repeat of the symbol already loading is ignored; anything else, including
+ * rejected input, cancels the running request so its late answer can never land.
  */
 export function useSymbolSearch(deps: SymbolSearchDeps): SymbolSearch {
-  const { client, cache, clock } = deps;
+  const { client, cache } = deps;
   const [state, dispatch] = useReducer(searchReducer, initialSearchState);
-  const inFlight = useRef<AbortController | null>(null);
+  const inFlight = useRef<InFlightSearch | null>(null);
   const nextRequestId = useRef(0);
 
   useEffect(
     () => () => {
-      inFlight.current?.abort();
+      inFlight.current?.controller.abort();
     },
     [],
   );
 
   const search = useCallback(
-    (rawInput: string) => {
+    (rawInput: string): boolean => {
       const parsed = parseSymbolInput(rawInput);
+      if (parsed.ok && parsed.symbol === inFlight.current?.symbol) {
+        return false;
+      }
+
+      inFlight.current?.controller.abort();
+      inFlight.current = null;
       if (!parsed.ok) {
         dispatch({ type: 'inputRejected', kind: toInputFailureKind(parsed.reason) });
-        return;
+        return true;
       }
 
-      const cached = cache.get(parsed.symbol);
-      if (cached && cache.isFresh(cached)) {
-        inFlight.current?.abort();
-        dispatch({ type: 'servedFromCache', data: cached });
-        return;
-      }
-
-      inFlight.current?.abort();
-      const controller = new AbortController();
-      inFlight.current = controller;
+      const current: InFlightSearch = { symbol: parsed.symbol, controller: new AbortController() };
+      inFlight.current = current;
       nextRequestId.current += 1;
 
       void runRequest({
         requestId: nextRequestId.current,
         symbol: parsed.symbol,
-        signal: controller.signal,
-        deps: { client, cache, clock },
+        signal: current.controller.signal,
+        deps: { client, cache },
         dispatch,
+      }).finally(() => {
+        if (inFlight.current === current) {
+          inFlight.current = null;
+        }
       });
+      return true;
     },
-    [client, cache, clock],
+    [client, cache],
   );
 
   return { state, search };
@@ -86,16 +96,16 @@ interface RequestContext {
 
 /**
  * Rocko Bishop
- * Executes one network search and reports its outcome. Kept outside the hook so the hook only
- * coordinates, and so every branch (success, cancellation, failure) is handled in one place.
- * @param context - Request id, symbol, cancellation signal, dependencies and dispatch.
+ * Executes one network search and reports its outcome. The symbol's last good data is shown while
+ * it loads, so the cells never blank out during a re-search. Kept outside the hook so the hook
+ * only coordinates, and so every branch (success, cancellation, failure) is handled in one place.
  */
 async function runRequest(context: RequestContext): Promise<void> {
   const { requestId, symbol, signal, deps, dispatch } = context;
-  dispatch({ type: 'requestStarted', requestId, symbol });
+  dispatch({ type: 'requestStarted', requestId, symbol, previous: deps.cache.get(symbol) });
   try {
     const summaries = await deps.client.fetchDailySummaries(symbol, signal);
-    const data = { symbol, summaries, fetchedAt: deps.clock() };
+    const data = { symbol, summaries };
     deps.cache.set(data);
     dispatch({ type: 'requestSucceeded', requestId, data });
   } catch (error) {
@@ -108,12 +118,6 @@ async function runRequest(context: RequestContext): Promise<void> {
   }
 }
 
-/**
- * Rocko Bishop
- * Maps an input rejection reason to its failure kind.
- * @param reason - Why the input was rejected.
- * @returns The matching failure kind.
- */
-function toInputFailureKind(reason: 'empty' | 'malformed'): 'emptyInput' | 'malformedInput' {
+function toInputFailureKind(reason: SymbolInputRejection): InputFailureKind {
   return reason === 'empty' ? 'emptyInput' : 'malformedInput';
 }

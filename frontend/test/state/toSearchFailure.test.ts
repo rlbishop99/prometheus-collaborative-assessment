@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { ApiError } from '../../src/api/apiError';
-import { shouldRetainData, toSearchFailure } from '../../src/state/toSearchFailure';
+import { isInputFailure, shouldRetainData, toSearchFailure } from '../../src/state/toSearchFailure';
 
 describe('toSearchFailure', () => {
   it.each([
@@ -28,5 +28,18 @@ describe('shouldRetainData', () => {
     ['emptyInput', false],
   ] as const)('%s -> %s', (kind, expected) => {
     expect(shouldRetainData({ kind })).toBe(expected);
+  });
+});
+
+describe('isInputFailure', () => {
+  it.each([
+    ['emptyInput', true],
+    ['malformedInput', true],
+    ['notFound', true],
+    ['noData', false],
+    ['unreachable', false],
+    ['unknown', false],
+  ] as const)('%s -> %s', (kind, expected) => {
+    expect(isInputFailure({ kind })).toBe(expected);
   });
 });

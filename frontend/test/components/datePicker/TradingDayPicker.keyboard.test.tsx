@@ -1,4 +1,4 @@
-/* Keyboard and focus behavior of the picker, from the step 9 keyboard QA round. */
+/* Keyboard and focus behavior of the picker (WAI-ARIA date-picker dialog pattern). */
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -78,6 +78,15 @@ describe('TradingDayPicker keyboard behavior', () => {
       expect(dialog()).toContainElement(document.activeElement as HTMLElement);
     }
     expect(screen.getByRole('button', { name: 'next control' })).not.toHaveFocus();
+  });
+
+  it('closes when focus moves elsewhere in the page, without pulling focus back', async () => {
+    await openPicker(ONE_MONTH);
+
+    screen.getByRole('button', { name: 'next control' }).focus();
+
+    expect(await screen.findByRole('button', { name: 'next control' })).toHaveFocus();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('closes when the browser window loses focus (URL bar, another app)', async () => {

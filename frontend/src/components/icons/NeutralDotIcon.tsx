@@ -5,12 +5,6 @@ import styles from './icons.module.css';
 import { SvgIcon } from './SvgIcon';
 import type { IconProps } from './SvgIcon';
 
-/**
- * Rocko Bishop
- * Grey circle: the value is within 1% of the latest day's.
- * @param props - Optional label, class and size.
- * @returns The icon.
- */
 export function NeutralDotIcon({ className, ...props }: IconProps): ReactNode {
   return (
     <SvgIcon

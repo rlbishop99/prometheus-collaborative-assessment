@@ -1,0 +1,171 @@
+/*
+ * Desktop: the panel takes the height left in the main column and only the table scrolls inside
+ * it, so the page itself still never scrolls. Mobile: the page scrolls as usual, and the table is
+ * capped so it scrolls within its own panel too.
+ */
+.panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 0;
+}
+
+.note {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.scroller {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border: var(--border-width) solid var(--color-glow);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card), var(--glow-cell);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-border);
+  /*
+   * Left-aligned, not right: the latest row has no glyph, so right-aligned values would end where
+   * the other rows' glyphs sit. Left-aligned, every value starts at the same edge and the glyphs
+   * trail it.
+   */
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* The header row stays visible while the rows scroll beneath it. */
+.table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.02em;
+}
+
+.row {
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.row:hover,
+.row:focus-within {
+  background: var(--color-surface-muted);
+}
+
+.row:last-child th,
+.row:last-child td {
+  border-bottom: none;
+}
+
+.dayButton {
+  padding: 0;
+  border: none;
+  background: none;
+  font-weight: var(--font-weight-semibold);
+  text-align: left;
+  cursor: pointer;
+}
+
+.value {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.shortLabel {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .panel {
+    flex: none;
+  }
+
+  .scroller {
+    flex: none;
+    max-height: 70dvh;
+  }
+
+  .table {
+    font-size: var(--font-size-sm);
+  }
+
+  .table th,
+  .table td {
+    padding: var(--space-2);
+  }
+
+  /* The date may wrap after its comma, which keeps four columns inside a phone's width. */
+  .dayButton {
+    white-space: normal;
+  }
+
+  .shortLabel {
+    display: inline;
+  }
+
+  /* Hidden visually but still read, so screen readers hear "Volume", not "Vol.". */
+  .fullLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+/* Skeleton rows match the Day view's empty cells. */
+.placeholder {
+  letter-spacing: 0.3em;
+  color: var(--color-border-strong);
+}
+
+/* While a search runs, a glow sweeps across each skeleton "---" (the text is the gradient's mask). */
+.shimmer .placeholder {
+  background: linear-gradient(
+      90deg,
+      var(--color-border-strong) 30%,
+      var(--color-glow) 50%,
+      var(--color-border-strong) 70%
+    )
+    0 0 / 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 1.6s linear infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: 0 0;
+  }
+}
+
+/* The global reduced-motion rule shortens animations, which would make an endless sweep flicker. */
+@media (prefers-reduced-motion: reduce) {
+  .shimmer .placeholder {
+    background: none;
+    color: var(--color-border-strong);
+    animation: none;
+  }
+}

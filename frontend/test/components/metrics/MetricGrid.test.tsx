@@ -36,6 +36,7 @@ describe('MetricGrid', () => {
       expect(valueOf(label)).toHaveTextContent('---');
       expect(within(valueOf(label)).getByText('No data')).toHaveClass('visually-hidden');
     }
+    expect(screen.getByRole('group', { name: 'Day' })).toHaveAccessibleDescription('No data');
   });
 
   it('formats the selected day', () => {
@@ -93,12 +94,6 @@ describe('MetricGrid', () => {
     expect(screen.getByRole('group', { name: 'Volume' })).toHaveAccessibleDescription(
       '2,000,000 Higher than Oct 9th',
     );
-  });
-
-  it('describes empty cells as "No data"', () => {
-    render(<MetricGrid selected={undefined} latest={undefined} busy={false} />);
-
-    expect(screen.getByRole('group', { name: 'Day' })).toHaveAccessibleDescription('No data');
   });
 
   it('announces updates politely and exposes the loading state', () => {

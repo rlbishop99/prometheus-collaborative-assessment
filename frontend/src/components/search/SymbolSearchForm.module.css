@@ -72,3 +72,8 @@
     width: 100%;
   }
 }
+
+/* Busy: a search is running, but the button still works, so a new symbol can replace it. */
+.form[aria-busy='true'] .button {
+  cursor: progress;
+}

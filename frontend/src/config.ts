@@ -7,7 +7,5 @@ export const appConfig = Object.freeze({
    * the backend reports its own 503 instead of the browser giving up first.
    */
   requestTimeoutMs: 25_000,
-  /** Matches the agreed 2-minute freshness window. */
-  cacheTtlMs: 120_000,
   cacheMaxEntries: 50,
 });

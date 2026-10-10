@@ -4,17 +4,24 @@ import type { SymbolData } from '../../src/state/searchTypes';
 import { selectDisplay } from '../../src/state/selectDisplay';
 import { tslaSummaries } from '../support/fixtures';
 
-const tsla: SymbolData = { symbol: 'TSLA', summaries: tslaSummaries, fetchedAt: 1 };
+const tsla: SymbolData = { symbol: 'TSLA', summaries: tslaSummaries };
 
 describe('selectDisplay', () => {
   it('shows placeholders before any search', () => {
     expect(selectDisplay({ status: 'idle' })).toEqual({ loading: false });
   });
 
-  it('shows placeholders while loading', () => {
+  it('shows placeholders while loading a symbol with no earlier data', () => {
     expect(selectDisplay({ status: 'loading', requestId: 1, symbol: 'TSLA' })).toEqual({
+      data: undefined,
       loading: true,
     });
+  });
+
+  it("keeps showing the symbol's earlier data while it reloads", () => {
+    expect(
+      selectDisplay({ status: 'loading', requestId: 2, symbol: 'TSLA', previous: tsla }),
+    ).toEqual({ data: tsla, loading: true });
   });
 
   it('shows data on success', () => {

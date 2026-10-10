@@ -14,8 +14,6 @@ interface WarningBannerProps {
  * The single warning template used for every warning, as agreed. `role="alert"` makes screen
  * readers announce it as soon as it appears; the icon is decorative because the text carries the
  * meaning.
- * @param props - The message to show and an optional id.
- * @returns The banner.
  */
 export function WarningBanner({ message, id }: WarningBannerProps): ReactNode {
   return (

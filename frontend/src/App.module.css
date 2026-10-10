@@ -1,4 +1,7 @@
-/* Desktop: search and picker on the left, the warning pushed to the right (see mockups). */
+/*
+ * Desktop: search and picker on the left; the warning, then the back button and the Day/Table
+ * toggle, pushed to the right (see mockups).
+ */
 .toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -11,7 +14,29 @@
   margin-left: auto;
 }
 
-/* Mobile: search and picker share a row; the warning drops onto its own full-width row. */
+.viewControls {
+  display: flex;
+  gap: var(--space-3);
+  margin-left: auto;
+}
+
+/* Slots let mobile place the back button and the toggle on different rows (see below). */
+.backSlot,
+.toggleSlot {
+  display: flex;
+}
+
+/* With a warning showing, the warning already pushes the group right; keep them side by side. */
+.warning + .viewControls {
+  margin-left: 0;
+}
+
+/*
+ * Mobile: the search fills the first row; the picker and the Day/Table toggle share the second, at
+ * opposite edges; "Back to table" gets the third, left-aligned under the picker; the warning moves
+ * to its own full-width row after them. The view-controls group dissolves (display: contents) so
+ * its two slots can sit on different rows.
+ */
 @media (max-width: 767px) {
   .toolbar {
     gap: var(--space-3);
@@ -20,6 +45,20 @@
 
   .warning {
     flex-basis: 100%;
+    order: 2;
     margin-left: 0;
+  }
+
+  .viewControls {
+    display: contents;
+  }
+
+  .toggleSlot {
+    margin-left: auto;
+  }
+
+  .backSlot {
+    flex-basis: 100%;
+    order: 1;
   }
 }

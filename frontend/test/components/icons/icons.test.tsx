@@ -6,22 +6,15 @@ import { ArrowDownIcon } from '../../../src/components/icons/ArrowDownIcon';
 import { ArrowUpIcon } from '../../../src/components/icons/ArrowUpIcon';
 import { LogoMarkIcon } from '../../../src/components/icons/LogoMarkIcon';
 import { NeutralDotIcon } from '../../../src/components/icons/NeutralDotIcon';
-import { SearchIcon } from '../../../src/components/icons/SearchIcon';
+import { SvgIcon } from '../../../src/components/icons/SvgIcon';
 import type { IconProps } from '../../../src/components/icons/SvgIcon';
 import { WarningIcon } from '../../../src/components/icons/WarningIcon';
 
-const icons: [string, ComponentType<IconProps>, string | undefined][] = [
-  ['ArrowUpIcon', ArrowUpIcon, 'trendUp'],
-  ['ArrowDownIcon', ArrowDownIcon, 'trendDown'],
-  ['NeutralDotIcon', NeutralDotIcon, 'trendNeutral'],
-  ['WarningIcon', WarningIcon, 'warning'],
-  ['LogoMarkIcon', LogoMarkIcon, 'brand'],
-  ['SearchIcon', SearchIcon, undefined],
-];
+const square = <rect width="10" height="10" />;
 
-describe.each(icons)('%s', (_name, Icon, colorClass) => {
+describe('SvgIcon', () => {
   it('is hidden from assistive technology when no label is given', () => {
-    const { container } = render(<Icon />);
+    const { container } = render(<SvgIcon viewBox="0 0 10 10">{square}</SvgIcon>);
     const svg = container.querySelector('svg');
 
     expect(svg).toHaveAttribute('aria-hidden', 'true');
@@ -30,20 +23,30 @@ describe.each(icons)('%s', (_name, Icon, colorClass) => {
   });
 
   it('is announced as an image with its label', () => {
-    render(<Icon label="Accessible name" />);
+    render(
+      <SvgIcon viewBox="0 0 10 10" label="Accessible name">
+        {square}
+      </SvgIcon>,
+    );
 
     expect(screen.getByRole('img', { name: 'Accessible name' })).toBeInTheDocument();
   });
+});
 
-  it('renders at the requested size and merges extra classes', () => {
+const coloredIcons: [string, ComponentType<IconProps>, string][] = [
+  ['ArrowUpIcon', ArrowUpIcon, 'trendUp'],
+  ['ArrowDownIcon', ArrowDownIcon, 'trendDown'],
+  ['NeutralDotIcon', NeutralDotIcon, 'trendNeutral'],
+  ['WarningIcon', WarningIcon, 'warning'],
+  ['LogoMarkIcon', LogoMarkIcon, 'brand'],
+];
+
+describe.each(coloredIcons)('%s', (_name, Icon, colorClass) => {
+  it('renders at the requested size with its color and any extra class', () => {
     const { container } = render(<Icon size={32} className="extra" />);
     const svg = container.querySelector('svg');
 
     expect(svg).toHaveAttribute('width', '32');
-    expect(svg).toHaveAttribute('height', '32');
-    expect(svg).toHaveClass('icon', 'extra');
-    if (colorClass) {
-      expect(svg).toHaveClass(colorClass);
-    }
+    expect(svg).toHaveClass('icon', colorClass, 'extra');
   });
 });

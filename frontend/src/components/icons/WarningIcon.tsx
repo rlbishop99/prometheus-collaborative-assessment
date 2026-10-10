@@ -5,13 +5,6 @@ import styles from './icons.module.css';
 import { SvgIcon } from './SvgIcon';
 import type { IconProps } from './SvgIcon';
 
-/**
- * Rocko Bishop
- * Yellow warning triangle with an exclamation mark, used by the warning banner. Both colors come
- * from tokens, so the icon follows the theme.
- * @param props - Optional label, class and size.
- * @returns The icon.
- */
 export function WarningIcon({ className, ...props }: IconProps): ReactNode {
   return (
     <SvgIcon viewBox="0 0 24 24" className={joinClassNames(styles.warning, className)} {...props}>

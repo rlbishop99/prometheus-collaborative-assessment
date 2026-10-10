@@ -5,13 +5,6 @@ import styles from './icons.module.css';
 import { SvgIcon } from './SvgIcon';
 import type { IconProps } from './SvgIcon';
 
-/**
- * Rocko Bishop
- * Up arrow inside a circle, matching the mobile mockups' "back to top" control. A brand-filled
- * disc with a contrasting arrow keeps it legible over any content behind it.
- * @param props - Optional label, class and size.
- * @returns The icon.
- */
 export function ScrollTopIcon({ className, ...props }: IconProps): ReactNode {
   return (
     <SvgIcon viewBox="0 0 24 24" className={joinClassNames(styles.brand, className)} {...props}>

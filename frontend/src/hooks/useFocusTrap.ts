@@ -15,8 +15,6 @@ const TABBABLE_SELECTOR = [
  * Rocko Bishop
  * Keeps Tab and Shift+Tab cycling inside `containerRef` while `active`, as the WAI-ARIA dialog
  * pattern recommends. Widgets inside keep their own arrow-key handling; only Tab is intercepted.
- * @param containerRef - The dialog element.
- * @param active - Whether the trap is engaged (e.g. while a popover is open).
  */
 export function useFocusTrap(containerRef: RefObject<HTMLElement | null>, active: boolean): void {
   useEffect(() => {
@@ -36,12 +34,6 @@ export function useFocusTrap(containerRef: RefObject<HTMLElement | null>, active
   }, [containerRef, active]);
 }
 
-/**
- * Rocko Bishop
- * Lists the elements inside a container that Tab can currently reach, in DOM order.
- * @param container - The element to search.
- * @returns Tabbable descendants (excluding `tabindex="-1"` and `aria-disabled` controls).
- */
 export function tabbableWithin(container: HTMLElement): HTMLElement[] {
   return Array.from(container.querySelectorAll<HTMLElement>(TABBABLE_SELECTOR)).filter(
     (element) => element.tabIndex >= 0 && element.getAttribute('aria-disabled') !== 'true',
@@ -52,8 +44,6 @@ export function tabbableWithin(container: HTMLElement): HTMLElement[] {
  * Rocko Bishop
  * Moves focus to the next or previous tabbable element, wrapping at either end. With a single
  * tabbable element, focus simply stays put.
- * @param event - The Tab keydown event (Shift reverses direction).
- * @param tabbables - Tabbable elements in DOM order.
  */
 function cycleFocus(event: KeyboardEvent, tabbables: readonly HTMLElement[]): void {
   const first = tabbables[0];

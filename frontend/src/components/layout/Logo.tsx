@@ -4,12 +4,6 @@ import { APP_NAME } from '../../content/documentTitle';
 import { LogoMarkIcon } from '../icons/LogoMarkIcon';
 import styles from './Logo.module.css';
 
-/**
- * Rocko Bishop
- * The brand lockup: the chart mark beside the app name. The mark is decorative, because the
- * visible text already names the app.
- * @returns The logo.
- */
 export function Logo(): ReactNode {
   return (
     <div className={styles.logo}>

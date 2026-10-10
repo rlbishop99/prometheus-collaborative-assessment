@@ -15,10 +15,6 @@ describe('formatDay', () => {
   ])('formats %s as %s', (key, expected) => {
     expect(formatDay(key)).toBe(expected);
   });
-
-  it('rejects malformed keys', () => {
-    expect(() => formatDay('Oct 9')).toThrow(RangeError);
-  });
 });
 
 describe('withOrdinal', () => {

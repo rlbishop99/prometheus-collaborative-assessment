@@ -1,8 +1,14 @@
 import { useId, useState } from 'react';
 import type { ReactNode, SubmitEvent } from 'react';
 
+import { searchCopy } from '../../content/searchCopy';
+import { useDelayedFlag } from '../../hooks/useDelayedFlag';
 import { SearchIcon } from '../icons/SearchIcon';
+import { SpinnerIcon } from '../icons/SpinnerIcon';
 import styles from './SymbolSearchForm.module.css';
+
+/** Cached answers arrive in milliseconds; the spinner only appears for a noticeable wait. */
+const SPINNER_DELAY_MS = 300;
 
 interface SymbolSearchFormProps {
   readonly onSearch: (rawInput: string) => void;
@@ -17,9 +23,9 @@ interface SymbolSearchFormProps {
  * Rocko Bishop
  * The symbol input and search button. It only collects text: validation and fetching belong to
  * the search hook, so this component stays reusable and trivially testable. When the caller
- * flags the input as invalid, the field links to the explanatory message.
- * @param props - The search callback, the loading flag and the optional error linkage.
- * @returns The search form.
+ * flags the input as invalid, the field links to the explanatory message. While a search runs,
+ * the button shows a spinner (after a short delay) but still submits, so a different symbol can
+ * replace the running search; the hook ignores repeats of the symbol already loading.
  */
 export function SymbolSearchForm({
   onSearch,
@@ -29,6 +35,7 @@ export function SymbolSearchForm({
 }: SymbolSearchFormProps): ReactNode {
   const [value, setValue] = useState('');
   const inputId = useId();
+  const showSpinner = useDelayedFlag(busy, SPINNER_DELAY_MS);
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -38,7 +45,7 @@ export function SymbolSearchForm({
   return (
     <form className={styles.form} role="search" onSubmit={handleSubmit} aria-busy={busy}>
       <label htmlFor={inputId} className="visually-hidden">
-        Stock symbol
+        {searchCopy.inputLabel}
       </label>
       <input
         id={inputId}
@@ -48,7 +55,7 @@ export function SymbolSearchForm({
         onChange={(event) => {
           setValue(event.target.value);
         }}
-        placeholder="AAPL"
+        placeholder={searchCopy.placeholder}
         autoComplete="off"
         autoCapitalize="characters"
         spellCheck={false}
@@ -56,8 +63,8 @@ export function SymbolSearchForm({
         aria-invalid={invalid || undefined}
         aria-describedby={invalid ? errorMessageId : undefined}
       />
-      <button className={styles.button} type="submit" aria-label="Search">
-        <SearchIcon size={22} />
+      <button className={styles.button} type="submit" aria-label={searchCopy.submitLabel}>
+        {showSpinner ? <SpinnerIcon size={22} /> : <SearchIcon size={22} />}
       </button>
     </form>
   );

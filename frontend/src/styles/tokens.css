@@ -19,10 +19,10 @@
 
   /* Brand */
   --color-brand: #7c3aed;
-  --color-brand-strong: #6d28d9;
   --color-brand-accent: #0fb89a;
   --color-on-brand: #ffffff;
-  --color-focus-ring: #0fb89a;
+  /* Darker than the accent: WCAG 1.4.11 needs 3:1 on every light surface (3.27:1 at worst). */
+  --color-focus-ring: #0b8f78;
 
   /* Neon glow (mint-cyan) used for cell borders, glows and focus */
   --color-glow: #14c9a8;
@@ -43,24 +43,19 @@
   --color-warning-text: #3d2a00;
 
   /* Spacing scale (4px base) */
-  --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
   --space-4: 1rem;
   --space-5: 1.5rem;
   --space-6: 2rem;
-  --space-7: 3rem;
 
   /* Typography */
   --font-sans:
     system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
   --font-size-sm: 0.875rem;
   --font-size-md: 1rem;
   --font-size-lg: 1.25rem;
   --font-size-xl: 1.75rem;
-  --font-size-metric: clamp(1.75rem, 1.2rem + 2vw, 2.5rem);
-  --font-weight-regular: 400;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
   --line-height-tight: 1.2;
@@ -94,7 +89,6 @@
     --color-text-muted: #b5a8e8;
 
     --color-brand: #b794ff;
-    --color-brand-strong: #d4bfff;
     --color-brand-accent: #5effd8;
     --color-on-brand: #1a0b33;
     --color-focus-ring: #5effd8;

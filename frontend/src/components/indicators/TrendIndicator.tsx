@@ -16,19 +16,11 @@ interface TrendIndicatorProps {
  * because the cell's visible caption states the comparison in words for every user (mouse,
  * keyboard, touch and screen reader); labelling the icon too would make screen readers say it
  * twice.
- * @param props - The trend.
- * @returns The indicator.
  */
 export function TrendIndicator({ trend }: TrendIndicatorProps): ReactNode {
   return <span className={styles.indicator}>{renderIcon(trend)}</span>;
 }
 
-/**
- * Rocko Bishop
- * Picks the icon for a trend.
- * @param trend - The trend.
- * @returns The icon element.
- */
 function renderIcon(trend: Trend): ReactNode {
   switch (trend) {
     case 'up':

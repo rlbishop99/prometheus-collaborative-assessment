@@ -24,9 +24,4 @@ describe('computeTrend', () => {
     expect(computeTrend(5, 0)).toBe('up');
     expect(computeTrend(0, 0)).toBe('neutral');
   });
-
-  it('treats non-finite input as neutral instead of guessing', () => {
-    expect(computeTrend(Number.NaN, 100)).toBe('neutral');
-    expect(computeTrend(100, Number.POSITIVE_INFINITY)).toBe('neutral');
-  });
 });

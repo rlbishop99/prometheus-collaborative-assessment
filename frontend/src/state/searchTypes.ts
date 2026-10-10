@@ -1,11 +1,9 @@
 import type { DailySummaries } from '../domain/types';
 
-/** A symbol's summaries plus when they were fetched, which drives cache freshness. */
+/** A symbol's summaries, as last returned by the API. */
 export interface SymbolData {
   readonly symbol: string;
   readonly summaries: DailySummaries;
-  /** Epoch milliseconds. */
-  readonly fetchedAt: number;
 }
 
 /**
@@ -16,6 +14,9 @@ export interface SymbolData {
 export type SearchFailureKind =
   'emptyInput' | 'malformedInput' | 'notFound' | 'noData' | 'unreachable' | 'unknown';
 
+/** The failures caught locally, before any request is made. */
+export type InputFailureKind = Extract<SearchFailureKind, 'emptyInput' | 'malformedInput'>;
+
 export interface SearchFailure {
   readonly kind: SearchFailureKind;
   /** The symbol searched, when one was parsed (used in messages such as "not found"). */
@@ -23,12 +24,18 @@ export interface SearchFailure {
 }
 
 /**
- * The search state machine. `retained` carries the last good data for the *same* symbol through a
- * failure, which is how the UI keeps showing data under the "unreachable" warning.
+ * The search state machine. `previous` (while loading) and `retained` (after a failure) carry the
+ * last good data for the *same* symbol, which is how the UI keeps showing data during a re-search
+ * and under the "unreachable" warning.
  */
 export type SearchState =
   | { readonly status: 'idle' }
-  | { readonly status: 'loading'; readonly requestId: number; readonly symbol: string }
+  | {
+      readonly status: 'loading';
+      readonly requestId: number;
+      readonly symbol: string;
+      readonly previous?: SymbolData;
+    }
   | { readonly status: 'success'; readonly data: SymbolData }
   | {
       readonly status: 'error';
@@ -37,9 +44,13 @@ export type SearchState =
     };
 
 export type SearchAction =
-  | { readonly type: 'inputRejected'; readonly kind: 'emptyInput' | 'malformedInput' }
-  | { readonly type: 'servedFromCache'; readonly data: SymbolData }
-  | { readonly type: 'requestStarted'; readonly requestId: number; readonly symbol: string }
+  | { readonly type: 'inputRejected'; readonly kind: InputFailureKind }
+  | {
+      readonly type: 'requestStarted';
+      readonly requestId: number;
+      readonly symbol: string;
+      readonly previous?: SymbolData;
+    }
   | { readonly type: 'requestSucceeded'; readonly requestId: number; readonly data: SymbolData }
   | {
       readonly type: 'requestFailed';

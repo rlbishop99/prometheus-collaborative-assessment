@@ -9,12 +9,6 @@ export interface DayParts {
   readonly day: number;
 }
 
-/**
- * Rocko Bishop
- * Splits a `YYYY-MM-DD` key into numbers, rejecting anything malformed instead of guessing.
- * @param dayKey - The key to parse.
- * @returns The numeric parts.
- */
 export function parseDayKey(dayKey: DayKey): DayParts {
   const match = DAY_KEY_PATTERN.exec(dayKey);
   if (!match) {
@@ -29,8 +23,6 @@ export function parseDayKey(dayKey: DayKey): DayParts {
  * Converts a day key into a Date at local midnight, which is what the calendar widget works in.
  * Building it from parts (never `new Date("YYYY-MM-DD")`, which parses as UTC) keeps the day from
  * shifting in timezones west of UTC.
- * @param dayKey - The exchange-local day.
- * @returns A local-midnight Date for that calendar day.
  */
 export function dayKeyToLocalDate(dayKey: DayKey): Date {
   const { year, month, day } = parseDayKey(dayKey);
@@ -41,8 +33,6 @@ export function dayKeyToLocalDate(dayKey: DayKey): Date {
  * Rocko Bishop
  * Converts a calendar-widget Date back into a day key, using local components so the round trip
  * with {@link dayKeyToLocalDate} is exact.
- * @param date - A Date chosen in the calendar.
- * @returns The day key.
  */
 export function localDateToDayKey(date: Date): DayKey {
   const month = String(date.getMonth() + 1).padStart(2, '0');

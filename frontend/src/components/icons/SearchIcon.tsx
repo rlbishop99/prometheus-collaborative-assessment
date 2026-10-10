@@ -3,13 +3,6 @@ import type { ReactNode } from 'react';
 import { SvgIcon } from './SvgIcon';
 import type { IconProps } from './SvgIcon';
 
-/**
- * Rocko Bishop
- * Magnifying glass for the search button. It inherits the button's text color, so it follows the
- * button's own states.
- * @param props - Optional label, class and size.
- * @returns The icon.
- */
 export function SearchIcon(props: IconProps): ReactNode {
   return (
     <SvgIcon viewBox="0 0 24 24" {...props}>

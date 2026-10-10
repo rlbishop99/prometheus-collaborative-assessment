@@ -61,13 +61,6 @@
   line-height: var(--line-height-tight);
 }
 
-.headerContent {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  color: var(--color-text-muted);
-}
-
 .sidebar {
   grid-area: sidebar;
   padding: var(--space-5);

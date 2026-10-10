@@ -17,8 +17,6 @@ export interface SelectedDay {
  * Tracks the user's chosen day within the current summaries. It defaults to the latest day, and
  * falls back to it whenever the choice is absent from the data, so the selection can never point
  * at a day that is not on screen.
- * @param summaries - The summaries being displayed, ascending by day.
- * @returns The selected and latest summaries, plus setters.
  */
 export function useSelectedDay(summaries: DailySummaries): SelectedDay {
   const [chosenDay, setChosenDay] = useState<DayKey | null>(null);

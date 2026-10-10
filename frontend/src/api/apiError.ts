@@ -9,23 +9,13 @@ export type ApiErrorKind = 'invalidInput' | 'notFound' | 'unreachable' | 'unknow
 
 /** A classified API failure. The UI branches on `kind`, never on status codes. */
 export class ApiError extends Error {
-  readonly status: number | undefined;
-
-  /**
-   * Rocko Bishop
-   * Creates a classified API error, keeping the underlying cause for debugging.
-   * @param kind - How the failure should be presented.
-   * @param message - Developer-facing description (not shown to users).
-   * @param options - Optional `cause` and HTTP `status`.
-   */
   constructor(
     readonly kind: ApiErrorKind,
     message: string,
-    options: { readonly cause?: unknown; readonly status?: number } = {},
+    options: { readonly cause?: unknown } = {},
   ) {
     super(message, { cause: options.cause });
     this.name = 'ApiError';
-    this.status = options.status;
   }
 }
 
@@ -33,8 +23,6 @@ export class ApiError extends Error {
  * Rocko Bishop
  * Recognizes a deliberate cancellation (a superseded search, or an unmount), which callers must
  * ignore rather than report as a failure.
- * @param error - Any thrown value.
- * @returns True for an AbortError.
  */
 export function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === 'AbortError';

@@ -1,14 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { ApiError, isAbortError } from '../../src/api/apiError';
-import { buildDailySummaryUrl, createDailySummaryClient } from '../../src/api/dailySummaryClient';
+import { buildDailySummaryUrl, HttpDailySummaryClient } from '../../src/api/dailySummaryClient';
 import { jsonResponse, problemResponse, tslaSummaries } from '../support/fixtures';
 
-const clientWith = (
-  fetchFn: typeof fetch,
-  timeoutMs = 1_000,
-): ReturnType<typeof createDailySummaryClient> =>
-  createDailySummaryClient({ baseUrl: '', timeoutMs, fetchFn });
+const clientWith = (fetchFn: typeof fetch, timeoutMs = 1_000): HttpDailySummaryClient =>
+  new HttpDailySummaryClient({ baseUrl: '', timeoutMs, fetchFn });
 
 const respondWith = (response: Response): ReturnType<typeof vi.fn<typeof fetch>> =>
   vi.fn<typeof fetch>(() => Promise.resolve(response));
@@ -68,7 +65,6 @@ describe('DailySummaryClient', () => {
     const error = await failureOf(clientWith(respondWith(response)).fetchDailySummaries('TSLA'));
 
     expect(error.kind).toBe(kind);
-    expect(error.status).toBe(response.status);
   });
 
   it('classifies network failures as unreachable', async () => {

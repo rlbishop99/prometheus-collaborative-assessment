@@ -26,8 +26,6 @@ const DEFAULT_SIZE = 20;
  * Rocko Bishop
  * Base for every icon. It centralizes the accessibility rule (labelled means `role="img"`,
  * otherwise `aria-hidden`), so individual icons only describe their shapes.
- * @param props - Label, class, size, viewBox and the SVG shapes.
- * @returns The SVG element.
  */
 export function SvgIcon({
   label,

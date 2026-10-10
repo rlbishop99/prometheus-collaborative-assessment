@@ -1,16 +1,12 @@
-/* Accessibility behaviors added in the step 9 pass. */
+/* App-level accessibility: input error linkage and the document title, through the real App. */
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { ApiError } from '../src/api/apiError';
 import { App } from '../src/App';
-import { TradingDayPicker } from '../src/components/datePicker/TradingDayPicker';
-import { SymbolSearchForm } from '../src/components/search/SymbolSearchForm';
-import { documentTitleFor } from '../src/content/documentTitle';
 import { SessionCache } from '../src/state/sessionCache';
-import { isInputFailure } from '../src/state/toSearchFailure';
-import { clientMock, manualClock, tslaSummaries } from './support/fixtures';
+import { clientMock, tslaSummaries } from './support/fixtures';
 
 const renderApp = (): {
   user: ReturnType<typeof userEvent.setup>;
@@ -18,9 +14,8 @@ const renderApp = (): {
 } => {
   const user = userEvent.setup();
   const client = clientMock();
-  const time = manualClock();
-  const cache = new SessionCache({ ttlMs: 120_000, maxEntries: 10, clock: time.clock });
-  render(<App dependencies={{ client, cache, clock: time.clock }} />);
+  const cache = new SessionCache({ maxEntries: 10 });
+  render(<App dependencies={{ client, cache }} />);
   return { user, client };
 };
 
@@ -68,25 +63,6 @@ describe('input error linkage', () => {
       'aria-invalid',
     );
   });
-
-  it.each([
-    ['emptyInput', true],
-    ['malformedInput', true],
-    ['notFound', true],
-    ['noData', false],
-    ['unreachable', false],
-    ['unknown', false],
-  ] as const)('isInputFailure(%s) is %s', (kind, expected) => {
-    expect(isInputFailure({ kind })).toBe(expected);
-  });
-
-  it('SymbolSearchForm omits the error attributes when valid', () => {
-    render(<SymbolSearchForm onSearch={vi.fn()} busy={false} errorMessageId="msg" />);
-
-    const input = screen.getByRole('textbox');
-    expect(input).not.toHaveAttribute('aria-invalid');
-    expect(input).not.toHaveAttribute('aria-describedby');
-  });
 });
 
 describe('document title', () => {
@@ -99,33 +75,5 @@ describe('document title', () => {
     await screen.findByRole('button', { name: /Trading day/ });
 
     expect(document.title).toBe('TSLA · Symbol Tracker');
-  });
-
-  it('formats the title with or without a symbol', () => {
-    expect(documentTitleFor('NVDA')).toBe('NVDA · Symbol Tracker');
-    expect(documentTitleFor(undefined)).toBe('Symbol Tracker');
-  });
-});
-
-describe('popover focus', () => {
-  it('closes when focus moves outside, without pulling focus back', async () => {
-    const user = userEvent.setup();
-    render(
-      <>
-        <TradingDayPicker
-          availableDays={['2026-10-08', '2026-10-09']}
-          selectedDay="2026-10-09"
-          onSelectDay={vi.fn()}
-        />
-        <button type="button">elsewhere</button>
-      </>,
-    );
-    await user.click(screen.getByRole('button', { name: /Trading day/ }));
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-
-    screen.getByRole('button', { name: 'elsewhere' }).focus();
-
-    expect(await screen.findByRole('button', { name: 'elsewhere' })).toHaveFocus();
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

@@ -4,7 +4,7 @@ import { initialSearchState, searchReducer } from '../../src/state/searchReducer
 import type { SearchState, SymbolData } from '../../src/state/searchTypes';
 import { tslaSummaries } from '../support/fixtures';
 
-const tsla: SymbolData = { symbol: 'TSLA', summaries: tslaSummaries, fetchedAt: 1 };
+const tsla: SymbolData = { symbol: 'TSLA', summaries: tslaSummaries };
 const loading = (requestId: number): SearchState => ({
   status: 'loading',
   requestId,
@@ -12,14 +12,19 @@ const loading = (requestId: number): SearchState => ({
 });
 
 describe('searchReducer', () => {
-  it('starts idle', () => {
-    expect(initialSearchState).toEqual({ status: 'idle' });
-  });
-
   it('enters loading when a request starts', () => {
     expect(
       searchReducer(initialSearchState, { type: 'requestStarted', requestId: 1, symbol: 'TSLA' }),
     ).toEqual(loading(1));
+  });
+
+  it("carries the symbol's earlier data into loading", () => {
+    expect(
+      searchReducer(
+        { status: 'success', data: tsla },
+        { type: 'requestStarted', requestId: 2, symbol: 'TSLA', previous: tsla },
+      ),
+    ).toEqual({ ...loading(2), previous: tsla });
   });
 
   it('applies the outcome of the current request', () => {
@@ -67,13 +72,6 @@ describe('searchReducer', () => {
     expect(searchReducer(loading(1), { type: 'inputRejected', kind: 'emptyInput' })).toEqual({
       status: 'error',
       failure: { kind: 'emptyInput' },
-    });
-  });
-
-  it('serves cached data immediately', () => {
-    expect(searchReducer(initialSearchState, { type: 'servedFromCache', data: tsla })).toEqual({
-      status: 'success',
-      data: tsla,
     });
   });
 });

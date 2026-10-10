@@ -36,3 +36,20 @@
 .onBrand {
   color: var(--color-on-brand);
 }
+
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* The global reduced-motion rule shortens animations, which would make an infinite spin flicker. */
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+  }
+}

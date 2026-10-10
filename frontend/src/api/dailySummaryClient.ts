@@ -17,21 +17,13 @@ export interface DailySummaryClientOptions {
 }
 
 /** The HTTP implementation of DailySummaryClient. */
-class HttpDailySummaryClient implements DailySummaryClient {
-  /**
-   * Rocko Bishop
-   * Stores the options. When `fetchFn` is omitted, requests use the global fetch.
-   * @param options - Base URL, timeout and an optional fetch implementation.
-   */
+export class HttpDailySummaryClient implements DailySummaryClient {
   constructor(private readonly options: DailySummaryClientOptions) {}
 
   /**
    * Rocko Bishop
    * Fetches and validates a symbol's summaries. Every failure surfaces as an ApiError, except a
    * caller-initiated abort, which propagates as an AbortError so it can be ignored.
-   * @param symbol - Normalized symbol.
-   * @param signal - Optional cancellation from the caller.
-   * @returns The validated summaries.
    */
   async fetchDailySummaries(symbol: string, signal?: AbortSignal): Promise<DailySummaries> {
     const response = await this.send(buildDailySummaryUrl(this.options.baseUrl, symbol), signal);
@@ -45,9 +37,6 @@ class HttpDailySummaryClient implements DailySummaryClient {
    * Rocko Bishop
    * Performs the GET under a combined signal: the caller's cancellation plus our timeout. Network
    * failures and timeouts both mean the data source is unreachable.
-   * @param url - Fully built request URL.
-   * @param signal - Optional caller cancellation.
-   * @returns The raw response.
    */
   private async send(url: string, signal: AbortSignal | undefined): Promise<Response> {
     const timeout = AbortSignal.timeout(this.options.timeoutMs);
@@ -64,24 +53,6 @@ class HttpDailySummaryClient implements DailySummaryClient {
   }
 }
 
-/**
- * Rocko Bishop
- * Creates the HTTP client. A factory keeps the class private, so callers depend on the interface.
- * @param options - Base URL, timeout and an optional fetch implementation.
- * @returns A DailySummaryClient.
- */
-export function createDailySummaryClient(options: DailySummaryClientOptions): DailySummaryClient {
-  return new HttpDailySummaryClient(options);
-}
-
-/**
- * Rocko Bishop
- * Builds the endpoint URL, percent-encoding the symbol so values like `^GSPC` stay a single path
- * segment.
- * @param baseUrl - API origin, or empty for same-origin.
- * @param symbol - Normalized symbol.
- * @returns The request URL.
- */
 export function buildDailySummaryUrl(baseUrl: string, symbol: string): string {
   const origin = baseUrl.replace(/\/+$/, '');
   return `${origin}/api/v1/stocks/${encodeURIComponent(symbol)}/daily-summary`;
@@ -91,8 +62,6 @@ export function buildDailySummaryUrl(baseUrl: string, symbol: string): string {
  * Rocko Bishop
  * Reads and validates a 2xx body. A body that is not the agreed contract is a server-side bug, not
  * user error, so it is classified `unknown`.
- * @param response - A successful response.
- * @returns The validated summaries.
  */
 async function parseSuccessBody(response: Response): Promise<DailySummaries> {
   let json: unknown;

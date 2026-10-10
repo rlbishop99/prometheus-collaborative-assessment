@@ -5,12 +5,6 @@ import styles from './icons.module.css';
 import { SvgIcon } from './SvgIcon';
 import type { IconProps } from './SvgIcon';
 
-/**
- * Rocko Bishop
- * Red downward triangle: the value is lower than the latest day's.
- * @param props - Optional label, class and size.
- * @returns The icon.
- */
 export function ArrowDownIcon({ className, ...props }: IconProps): ReactNode {
   return (
     <SvgIcon viewBox="0 0 24 24" className={joinClassNames(styles.trendDown, className)} {...props}>

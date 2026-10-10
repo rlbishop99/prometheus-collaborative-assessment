@@ -5,23 +5,17 @@ import { ApiError } from '../../src/api/apiError';
 import type { DailySummaries } from '../../src/domain/types';
 import { useSymbolSearch } from '../../src/hooks/useSymbolSearch';
 import { SessionCache } from '../../src/state/sessionCache';
-import { clientMock, manualClock, nvdaSummaries, tslaSummaries } from '../support/fixtures';
-
-const TWO_MINUTES = 120_000;
+import { clientMock, nvdaSummaries, tslaSummaries } from '../support/fixtures';
 
 const setup = (): {
   client: ReturnType<typeof clientMock>;
-  time: ReturnType<typeof manualClock>;
   result: { current: ReturnType<typeof useSymbolSearch> };
   unmount: () => void;
 } => {
   const client = clientMock();
-  const time = manualClock();
-  const cache = new SessionCache({ ttlMs: TWO_MINUTES, maxEntries: 10, clock: time.clock });
-  const { result, unmount } = renderHook(() =>
-    useSymbolSearch({ client, cache, clock: time.clock }),
-  );
-  return { client, time, result, unmount };
+  const cache = new SessionCache({ maxEntries: 10 });
+  const { result, unmount } = renderHook(() => useSymbolSearch({ client, cache }));
+  return { client, result, unmount };
 };
 
 /** A promise the test settles by hand, to control request timing. */
@@ -37,10 +31,6 @@ const deferred = (): {
 };
 
 describe('useSymbolSearch', () => {
-  it('starts idle', () => {
-    expect(setup().result.current.state).toEqual({ status: 'idle' });
-  });
-
   it('loads and then succeeds with the normalized symbol', async () => {
     const { client, result } = setup();
     const gate = deferred();
@@ -76,48 +66,40 @@ describe('useSymbolSearch', () => {
     expect(client.fetchDailySummaries).not.toHaveBeenCalled();
   });
 
-  it('serves a re-search within 2 minutes from the session cache', async () => {
-    const { client, time, result } = setup();
-    client.fetchDailySummaries.mockResolvedValue(tslaSummaries);
-
+  it("asks the API on every search, showing the symbol's earlier data meanwhile", async () => {
+    const { client, result } = setup();
+    const gate = deferred();
+    client.fetchDailySummaries
+      .mockResolvedValueOnce(nvdaSummaries)
+      .mockReturnValueOnce(gate.promise);
     act(() => {
       result.current.search('TSLA');
     });
     await waitFor(() => {
       expect(result.current.state.status).toBe('success');
     });
-    time.advance(TWO_MINUTES - 1);
+
     act(() => {
       result.current.search('tsla');
     });
-
-    expect(result.current.state.status).toBe('success');
-    expect(client.fetchDailySummaries).toHaveBeenCalledTimes(1);
-  });
-
-  it('re-queries once 2 minutes have elapsed', async () => {
-    const { client, time, result } = setup();
-    client.fetchDailySummaries.mockResolvedValue(tslaSummaries);
-
-    act(() => {
-      result.current.search('TSLA');
-    });
-    await waitFor(() => {
-      expect(result.current.state.status).toBe('success');
-    });
-    time.advance(TWO_MINUTES);
-    act(() => {
-      result.current.search('TSLA');
-    });
-    await waitFor(() => {
-      expect(result.current.state.status).toBe('success');
+    expect(result.current.state).toMatchObject({
+      status: 'loading',
+      previous: { symbol: 'TSLA', summaries: nvdaSummaries },
     });
 
+    await act(async () => {
+      gate.resolve(tslaSummaries);
+      await gate.promise;
+    });
+    expect(result.current.state).toMatchObject({
+      status: 'success',
+      data: { summaries: tslaSummaries },
+    });
     expect(client.fetchDailySummaries).toHaveBeenCalledTimes(2);
   });
 
   it('keeps the last good data for the same symbol when the API becomes unreachable', async () => {
-    const { client, time, result } = setup();
+    const { client, result } = setup();
     client.fetchDailySummaries
       .mockResolvedValueOnce(tslaSummaries)
       .mockRejectedValueOnce(new ApiError('unreachable', 'down'));
@@ -128,7 +110,6 @@ describe('useSymbolSearch', () => {
     await waitFor(() => {
       expect(result.current.state.status).toBe('success');
     });
-    time.advance(TWO_MINUTES);
     act(() => {
       result.current.search('TSLA');
     });
@@ -142,24 +123,7 @@ describe('useSymbolSearch', () => {
     });
   });
 
-  it('retains nothing when the unreachable symbol was never loaded this session', async () => {
-    const { client, result } = setup();
-    client.fetchDailySummaries.mockRejectedValueOnce(new ApiError('unreachable', 'down'));
-
-    act(() => {
-      result.current.search('NVDA');
-    });
-
-    await waitFor(() => {
-      expect(result.current.state).toEqual({
-        status: 'error',
-        failure: { kind: 'unreachable', symbol: 'NVDA' },
-        retained: undefined,
-      });
-    });
-  });
-
-  it("never shows another symbol's data under an outage", async () => {
+  it("never shows another symbol's data while loading or under an outage", async () => {
     const { client, result } = setup();
     client.fetchDailySummaries
       .mockResolvedValueOnce(tslaSummaries)
@@ -174,6 +138,7 @@ describe('useSymbolSearch', () => {
     act(() => {
       result.current.search('NVDA');
     });
+    expect(result.current.state).toEqual({ status: 'loading', requestId: 2, symbol: 'NVDA' });
 
     await waitFor(() => {
       expect(result.current.state).toMatchObject({ status: 'error', retained: undefined });
@@ -194,19 +159,6 @@ describe('useSymbolSearch', () => {
         failure: { kind: 'notFound', symbol: 'ZZZZ' },
         retained: undefined,
       });
-    });
-  });
-
-  it('folds a server-side 400 into malformedInput', async () => {
-    const { client, result } = setup();
-    client.fetchDailySummaries.mockRejectedValueOnce(new ApiError('invalidInput', 'bad'));
-
-    act(() => {
-      result.current.search('TSLA');
-    });
-
-    await waitFor(() => {
-      expect(result.current.state).toMatchObject({ failure: { kind: 'malformedInput' } });
     });
   });
 
@@ -235,6 +187,51 @@ describe('useSymbolSearch', () => {
 
     expect(signals[0]?.aborted).toBe(true);
     expect(result.current.state).toMatchObject({ data: { symbol: 'NVDA' } });
+  });
+
+  it('ignores a repeat search for the symbol already loading, until it settles', async () => {
+    const { client, result } = setup();
+    const gate = deferred();
+    client.fetchDailySummaries.mockReturnValueOnce(gate.promise).mockResolvedValue(tslaSummaries);
+
+    let accepted: boolean | undefined;
+    act(() => {
+      result.current.search('TSLA');
+    });
+    act(() => {
+      accepted = result.current.search(' tsla ');
+    });
+    expect(accepted).toBe(false);
+    expect(client.fetchDailySummaries).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      gate.resolve(tslaSummaries);
+      await gate.promise;
+    });
+    act(() => {
+      accepted = result.current.search('TSLA');
+    });
+    expect(accepted).toBe(true);
+    expect(client.fetchDailySummaries).toHaveBeenCalledTimes(2);
+  });
+
+  it('cancels the running search when the next input is rejected', () => {
+    const { client, result } = setup();
+    let captured: AbortSignal | undefined;
+    client.fetchDailySummaries.mockImplementation((_symbol, signal) => {
+      captured = signal;
+      return deferred().promise;
+    });
+
+    act(() => {
+      result.current.search('TSLA');
+    });
+    act(() => {
+      result.current.search('bad symbol!');
+    });
+
+    expect(captured?.aborted).toBe(true);
+    expect(result.current.state).toEqual({ status: 'error', failure: { kind: 'malformedInput' } });
   });
 
   it('aborts the in-flight request on unmount', () => {

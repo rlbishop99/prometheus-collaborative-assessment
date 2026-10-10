@@ -5,12 +5,6 @@ import styles from './icons.module.css';
 import { SvgIcon } from './SvgIcon';
 import type { IconProps } from './SvgIcon';
 
-/**
- * Rocko Bishop
- * Green upward triangle: the value is higher than the latest day's.
- * @param props - Optional label, class and size.
- * @returns The icon.
- */
 export function ArrowUpIcon({ className, ...props }: IconProps): ReactNode {
   return (
     <SvgIcon viewBox="0 0 24 24" className={joinClassNames(styles.trendUp, className)} {...props}>

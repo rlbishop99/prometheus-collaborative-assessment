@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import { layoutCopy } from '../../content/layoutCopy';
 import { useScrolledPast } from '../../hooks/useScrolledPast';
 import { ScrollTopIcon } from '../icons/ScrollTopIcon';
 import styles from './ScrollToTopButton.module.css';
@@ -17,8 +18,6 @@ interface ScrollToTopButtonProps {
  * The mobile "back to top" control from the mockups. It appears only once the page is scrolled
  * down (it would do nothing at the top) and is hidden on desktop via CSS. Scrolling honors the
  * user's reduced-motion preference, and focus moves to the top of the content afterwards.
- * @param props - The id of the element to focus after scrolling.
- * @returns The button, or nothing while near the top.
  */
 export function ScrollToTopButton({ focusTargetId }: ScrollToTopButtonProps): ReactNode {
   const visible = useScrolledPast(SHOW_AFTER_PX);
@@ -32,18 +31,17 @@ export function ScrollToTopButton({ focusTargetId }: ScrollToTopButtonProps): Re
   };
 
   return (
-    <button type="button" className={styles.button} aria-label="Back to top" onClick={handleClick}>
+    <button
+      type="button"
+      className={styles.button}
+      aria-label={layoutCopy.backToTop}
+      onClick={handleClick}
+    >
       <ScrollTopIcon size={44} />
     </button>
   );
 }
 
-/**
- * Rocko Bishop
- * Reads the OS-level reduced-motion setting, defaulting to "no preference" where matchMedia is
- * unavailable.
- * @returns True when the user asked for reduced motion.
- */
 function prefersReducedMotion(): boolean {
   return typeof window.matchMedia === 'function'
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches

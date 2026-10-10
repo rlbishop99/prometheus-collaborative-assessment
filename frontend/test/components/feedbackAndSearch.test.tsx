@@ -49,10 +49,29 @@ describe('SymbolSearchForm', () => {
     expect(onSearch).toHaveBeenCalledWith('');
   });
 
-  it('marks itself busy while a search runs', () => {
+  it('omits the error attributes while the input is valid', () => {
+    render(<SymbolSearchForm onSearch={vi.fn()} busy={false} errorMessageId="msg" />);
+
+    const input = screen.getByRole('textbox');
+    expect(input).not.toHaveAttribute('aria-invalid');
+    expect(input).not.toHaveAttribute('aria-describedby');
+  });
+
+  it('marks itself busy while a search runs, without disabling the button', () => {
     render(<SymbolSearchForm onSearch={vi.fn()} busy />);
 
     expect(screen.getByRole('search')).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByRole('button', { name: 'Search' })).not.toHaveAttribute('aria-disabled');
+  });
+
+  it('still submits while a search runs, so a new symbol can replace it', async () => {
+    const user = userEvent.setup();
+    const onSearch = vi.fn();
+    render(<SymbolSearchForm onSearch={onSearch} busy />);
+
+    await user.type(screen.getByRole('textbox'), 'nvda{Enter}');
+
+    expect(onSearch).toHaveBeenCalledWith('nvda');
   });
 });
 

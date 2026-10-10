@@ -1,15 +1,11 @@
 import type { ReactNode } from 'react';
 
-import { describeTrend } from '../../content/trendLabels';
-import { formatMonthDay } from '../../domain/formatDay';
-import { computeTrend } from '../../domain/trend';
+import { metricGridCopy } from '../../content/metricLabels';
 import type { DailySummary } from '../../domain/types';
-import { TrendIndicator } from '../indicators/TrendIndicator';
+import { buildComparison } from '../indicators/comparison';
+import type { ComparableField, Comparison } from '../indicators/comparison';
 import { DayCell, HighAverageCell, LowAverageCell, VolumeCell } from './cells';
-import type { Comparison } from './cells';
 import styles from './MetricGrid.module.css';
-
-type ComparableField = 'volume' | 'lowAverage' | 'highAverage';
 
 interface MetricGridProps {
   /** The day being viewed; undefined renders all placeholders. */
@@ -21,13 +17,8 @@ interface MetricGridProps {
 
 /**
  * Rocko Bishop
- * The four cells in mockup order (Day, Volume, Low Average, High Average). It decides when a
- * comparison applies: only for a day other than the latest, which has no baseline to compare
- * against. The region is a named live landmark, so screen-reader users can jump to it and hear
- * updates. The cells form a list; the explicit role keeps list semantics in Safari, which drops
- * them from lists styled without bullets.
- * @param props - Selected and latest summaries, and the loading flag.
- * @returns The metric grid.
+ * The four Day-view cells in a named live region. The explicit `role="list"` keeps list semantics
+ * in Safari, which drops them from lists styled without bullets.
  */
 export function MetricGrid({ selected, latest, busy }: MetricGridProps): ReactNode {
   const comparisonFor = (field: ComparableField): Comparison | undefined =>
@@ -36,7 +27,7 @@ export function MetricGrid({ selected, latest, busy }: MetricGridProps): ReactNo
   return (
     <section
       className={styles.region}
-      aria-label="Daily summary"
+      aria-label={metricGridCopy.regionLabel}
       aria-live="polite"
       aria-busy={busy}
     >
@@ -48,28 +39,4 @@ export function MetricGrid({ selected, latest, busy }: MetricGridProps): ReactNo
       </ul>
     </section>
   );
-}
-
-/**
- * Rocko Bishop
- * Builds the glyph and caption for one field, or nothing when no comparison applies (no data, or
- * the latest day itself is selected).
- * @param selected - The viewed day.
- * @param latest - The baseline day.
- * @param field - Which value to compare.
- * @returns The comparison, or undefined.
- */
-function buildComparison(
-  selected: DailySummary | undefined,
-  latest: DailySummary | undefined,
-  field: ComparableField,
-): Comparison | undefined {
-  if (!selected || !latest || selected.day === latest.day) {
-    return undefined;
-  }
-  const trend = computeTrend(selected[field], latest[field]);
-  return {
-    indicator: <TrendIndicator trend={trend} />,
-    caption: describeTrend(trend, formatMonthDay(latest.day)),
-  };
 }

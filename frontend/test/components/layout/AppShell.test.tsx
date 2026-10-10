@@ -11,12 +11,6 @@ describe('AppShell', () => {
     expect(screen.getByRole('main')).toHaveTextContent('body');
   });
 
-  it('omits the sidebar landmark while the sidebar is empty', () => {
-    render(<AppShell title="Search">body</AppShell>);
-
-    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
-  });
-
   it('renders the title as the single page heading', () => {
     render(<AppShell title="Search">body</AppShell>);
 
@@ -40,18 +34,5 @@ describe('AppShell', () => {
     );
     expect(screen.getByRole('main')).toHaveAttribute('id', MAIN_CONTENT_ID);
     expect(screen.getByRole('main')).toHaveAttribute('tabindex', '-1');
-  });
-
-  it('renders optional header and sidebar content only when provided', () => {
-    const { rerender } = render(<AppShell title="Search">body</AppShell>);
-    expect(screen.queryByText('extra header')).not.toBeInTheDocument();
-
-    rerender(
-      <AppShell title="Search" headerContent="extra header" sidebarContent="side">
-        body
-      </AppShell>,
-    );
-    expect(screen.getByRole('banner')).toHaveTextContent('extra header');
-    expect(screen.getByRole('complementary', { name: 'Sidebar' })).toHaveTextContent('side');
   });
 });

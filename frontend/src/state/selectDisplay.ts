@@ -12,17 +12,15 @@ export interface DisplayModel {
 /**
  * Rocko Bishop
  * Maps the search state to what is displayed. Keeping this out of components means the rules
- * (retained data under failures, the empty-result warning) are tested once and rendered
- * consistently.
- * @param state - The current search state.
- * @returns The display model.
+ * (the symbol's last good data while re-searching and under failures, the empty-result warning)
+ * are tested once and rendered consistently.
  */
 export function selectDisplay(state: SearchState): DisplayModel {
   switch (state.status) {
     case 'idle':
       return { loading: false };
     case 'loading':
-      return { loading: true };
+      return { data: state.previous, loading: true };
     case 'success':
       return state.data.summaries.length === 0
         ? {

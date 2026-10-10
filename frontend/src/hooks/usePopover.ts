@@ -17,7 +17,6 @@ export interface Popover {
  * entirely (URL bar, another window). The last case fires no `focusin` in the page, so it is
  * caught through the window's `blur` event. Listeners are attached only while open, so a closed
  * popover costs nothing.
- * @returns Open state, actions and the refs to attach.
  */
 export function usePopover(): Popover {
   const [isOpen, setIsOpen] = useState(false);
@@ -68,13 +67,6 @@ export function usePopover(): Popover {
   return { isOpen, toggle, close, triggerRef, panelRef };
 }
 
-/**
- * Rocko Bishop
- * Null-safe containment check for event targets.
- * @param target - The event target.
- * @param container - The element that may contain it.
- * @returns True when `target` is inside `container`.
- */
 function isInside(target: Node | null, container: HTMLElement | null): boolean {
   return target !== null && container !== null && container.contains(target);
 }

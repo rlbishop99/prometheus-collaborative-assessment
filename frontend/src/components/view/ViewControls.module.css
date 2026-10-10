@@ -1,0 +1,64 @@
+/* Shared by the Day/Table toggle and the back button, which sit together at the toolbar's right. */
+.toggle {
+  display: inline-flex;
+  min-height: 2.75rem;
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.option {
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  background: transparent;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.option + .option {
+  border-left: 2px solid var(--color-border-strong);
+}
+
+.option:hover {
+  background: var(--color-surface-muted);
+}
+
+.option[aria-pressed='true'] {
+  background: var(--color-brand);
+  color: var(--color-on-brand);
+}
+
+/* Drawn inset, because the toggle clips its children (overflow: hidden). */
+.option:focus-visible {
+  outline-offset: -3px;
+}
+
+/*
+ * The focus-ring color is too close to the brand fill (1.4:1 light, 1.9:1 dark), so the pressed
+ * option draws its ring in the on-brand color, set in from the edge so brand fill surrounds it.
+ */
+.option[aria-pressed='true']:focus-visible {
+  outline-color: var(--color-on-brand);
+  outline-offset: -5px;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.back:hover {
+  background: var(--color-surface-muted);
+}

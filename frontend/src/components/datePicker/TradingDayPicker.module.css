@@ -22,6 +22,16 @@
   background: var(--color-surface-muted);
 }
 
+/* No data yet: the trigger holds its place but reads as unavailable. */
+.trigger[aria-disabled='true'] {
+  color: var(--color-text-muted);
+  cursor: default;
+}
+
+.trigger[aria-disabled='true']:hover {
+  background: var(--color-surface);
+}
+
 /* A dropdown anchored under the trigger, left-aligned with it. */
 .panel {
   position: absolute;
