@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react';
 
-import { formatDay } from '../../domain/formatDay';
+import { describeTrend } from '../../content/trendLabels';
+import { formatMonthDay } from '../../domain/formatDay';
 import { computeTrend } from '../../domain/trend';
 import type { DailySummary } from '../../domain/types';
 import { TrendIndicator } from '../indicators/TrendIndicator';
 import { DayCell, HighAverageCell, LowAverageCell, VolumeCell } from './cells';
+import type { Comparison } from './cells';
 import styles from './MetricGrid.module.css';
 
 type ComparableField = 'volume' | 'lowAverage' | 'highAverage';
@@ -19,23 +21,24 @@ interface MetricGridProps {
 
 /**
  * Rocko Bishop
- * The four cells in mockup order (Day, Volume, Low Average, High Average). It decides when
- * indicators apply: only for a day other than the latest, which has no baseline to compare
- * against.
+ * The four cells in mockup order (Day, Volume, Low Average, High Average). It decides when a
+ * comparison applies: only for a day other than the latest, which has no baseline to compare
+ * against. The region is a named live landmark, so screen-reader users can jump to it and hear
+ * updates.
  * @param props - Selected and latest summaries, and the loading flag.
  * @returns The metric grid.
  */
 export function MetricGrid({ selected, latest, busy }: MetricGridProps): ReactNode {
-  const indicatorFor = (field: ComparableField): ReactNode =>
-    renderIndicator(selected, latest, field);
+  const comparisonFor = (field: ComparableField): Comparison | undefined =>
+    buildComparison(selected, latest, field);
 
   return (
     <section aria-label="Daily summary" aria-live="polite" aria-busy={busy}>
       <dl className={styles.grid}>
         <DayCell summary={selected} />
-        <VolumeCell summary={selected} indicator={indicatorFor('volume')} />
-        <LowAverageCell summary={selected} indicator={indicatorFor('lowAverage')} />
-        <HighAverageCell summary={selected} indicator={indicatorFor('highAverage')} />
+        <VolumeCell summary={selected} comparison={comparisonFor('volume')} />
+        <LowAverageCell summary={selected} comparison={comparisonFor('lowAverage')} />
+        <HighAverageCell summary={selected} comparison={comparisonFor('highAverage')} />
       </dl>
     </section>
   );
@@ -43,25 +46,24 @@ export function MetricGrid({ selected, latest, busy }: MetricGridProps): ReactNo
 
 /**
  * Rocko Bishop
- * Builds the trend indicator for one field, or nothing when no comparison applies (no data, or
+ * Builds the glyph and caption for one field, or nothing when no comparison applies (no data, or
  * the latest day itself is selected).
  * @param selected - The viewed day.
  * @param latest - The baseline day.
  * @param field - Which value to compare.
- * @returns The indicator element, or null.
+ * @returns The comparison, or undefined.
  */
-function renderIndicator(
+function buildComparison(
   selected: DailySummary | undefined,
   latest: DailySummary | undefined,
   field: ComparableField,
-): ReactNode {
+): Comparison | undefined {
   if (!selected || !latest || selected.day === latest.day) {
-    return null;
+    return undefined;
   }
-  return (
-    <TrendIndicator
-      trend={computeTrend(selected[field], latest[field])}
-      baselineLabel={formatDay(latest.day)}
-    />
-  );
+  const trend = computeTrend(selected[field], latest[field]);
+  return {
+    indicator: <TrendIndicator trend={trend} />,
+    caption: describeTrend(trend, formatMonthDay(latest.day)),
+  };
 }

@@ -24,9 +24,20 @@ const ORDINAL_SUFFIXES: Readonly<Record<Intl.LDMLPluralRule, string>> = {
  * @returns The display string.
  */
 export function formatDay(dayKey: DayKey): string {
+  return `${formatMonthDay(dayKey)}, ${parseDayKey(dayKey).year}`;
+}
+
+/**
+ * Rocko Bishop
+ * Formats a day key without the year, e.g. `Oct 9th`, for compact references within the 30-day
+ * window (the full date is shown in the Day cell).
+ * @param dayKey - The day as `YYYY-MM-DD`.
+ * @returns The display string.
+ */
+export function formatMonthDay(dayKey: DayKey): string {
   const { year, month, day } = parseDayKey(dayKey);
   const monthName = monthFormatter.format(new Date(Date.UTC(year, month - 1, day)));
-  return `${monthName} ${withOrdinal(day)}, ${year}`;
+  return `${monthName} ${withOrdinal(day)}`;
 }
 
 /**

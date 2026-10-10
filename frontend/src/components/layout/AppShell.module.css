@@ -106,7 +106,8 @@
     display: none;
   }
 
+  /* Extra bottom room so the last card can scroll clear of the fixed back-to-top button (44px). */
   .main {
-    padding: var(--space-4);
+    padding: var(--space-4) var(--space-4) calc(var(--space-4) * 2 + 44px);
   }
 }

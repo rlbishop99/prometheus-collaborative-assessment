@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { dayKeyToLocalDate, localDateToDayKey, parseDayKey } from '../../src/domain/dayKey';
-import { formatDay, withOrdinal } from '../../src/domain/formatDay';
+import { formatDay, formatMonthDay, withOrdinal } from '../../src/domain/formatDay';
 import { formatPrice, formatVolume } from '../../src/domain/formatNumber';
 
 describe('formatDay', () => {
@@ -70,5 +70,15 @@ describe('day key conversion', () => {
   it('parses parts and rejects malformed keys', () => {
     expect(parseDayKey('2026-10-09')).toEqual({ year: 2026, month: 10, day: 9 });
     expect(() => parseDayKey('2026-1-9')).toThrow(RangeError);
+  });
+});
+
+describe('formatMonthDay', () => {
+  it.each([
+    ['2026-10-09', 'Oct 9th'],
+    ['2026-09-22', 'Sep 22nd'],
+    ['1999-01-01', 'Jan 1st'],
+  ])('formats %s as %s', (key, expected) => {
+    expect(formatMonthDay(key)).toBe(expected);
   });
 });

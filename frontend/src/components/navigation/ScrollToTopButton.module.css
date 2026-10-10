@@ -1,0 +1,20 @@
+/* Mobile-only, as in the mockups; desktop shows the whole page without scrolling. */
+.button {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .button {
+    position: fixed;
+    right: var(--space-4);
+    bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+    z-index: 30;
+    display: inline-flex;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: 0 4px 14px rgb(16 24 40 / 30%);
+    cursor: pointer;
+  }
+}

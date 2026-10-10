@@ -78,13 +78,9 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: /October 7th, 2026/ }));
 
     expect(valueOf('Day')).toHaveTextContent('Oct 7th, 2026');
-    expect(within(valueOf('Volume')).getByRole('img')).toHaveAccessibleName(
-      'Lower than Oct 9th, 2026',
-    );
-    expect(within(valueOf('Low Average')).getByRole('img')).toHaveAccessibleName(
-      'Lower than Oct 9th, 2026',
-    );
-    expect(within(valueOf('Day')).queryByRole('img')).not.toBeInTheDocument();
+    expect(within(valueOf('Volume')).getByText('Lower than Oct 9th')).toBeVisible();
+    expect(within(valueOf('Low Average')).getByText('Lower than Oct 9th')).toBeVisible();
+    expect(within(valueOf('Day')).queryByText(/than|Within/)).not.toBeInTheDocument();
   });
 
   it('a new search resets the picker to the latest day', async () => {

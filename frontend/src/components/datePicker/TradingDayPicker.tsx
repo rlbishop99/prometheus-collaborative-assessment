@@ -4,9 +4,11 @@ import { useId, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { DayPicker } from 'react-day-picker';
 
+import { datePickerCopy } from '../../content/datePickerCopy';
 import { dayKeyToLocalDate, localDateToDayKey } from '../../domain/dayKey';
 import { formatDay } from '../../domain/formatDay';
 import type { DayKey } from '../../domain/types';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { usePopover } from '../../hooks/usePopover';
 import { CalendarIcon } from '../icons/CalendarIcon';
 import styles from './TradingDayPicker.module.css';
@@ -23,6 +25,8 @@ interface TradingDayPickerProps {
  * A compact trigger showing the selected day, which opens a calendar popover. Only days present
  * in the data are selectable, which disables weekends, market holidays and anything outside the
  * 30-day window with no hard-coded calendar. Month navigation is clamped to the window as well.
+ * Keyboard use follows the WAI-ARIA date-picker pattern: arrow keys move between days, Tab stays
+ * within the open dialog, and a visible hint explains this.
  * @param props - Available days, the current selection and the change callback.
  * @returns The picker.
  */
@@ -32,7 +36,9 @@ export function TradingDayPicker({
   onSelectDay,
 }: TradingDayPickerProps): ReactNode {
   const { isOpen, toggle, close, triggerRef, panelRef } = usePopover();
+  useFocusTrap(panelRef, isOpen);
   const panelId = useId();
+  const hintId = useId();
   const bounds = useMemo(() => computeBounds(availableDays), [availableDays]);
   const available = useMemo(() => new Set(availableDays), [availableDays]);
   const selectedDate = dayKeyToLocalDate(selectedDay);
@@ -57,7 +63,8 @@ export function TradingDayPicker({
       >
         <CalendarIcon size={20} />
         {/* The explicit space keeps the accessible name from collapsing to "day:Oct". */}
-        <span className="visually-hidden">Trading day:</span> <span>{formatDay(selectedDay)}</span>
+        <span className="visually-hidden">{datePickerCopy.triggerPrefix}</span>{' '}
+        <span>{formatDay(selectedDay)}</span>
       </button>
       {isOpen && bounds ? (
         <div
@@ -65,7 +72,8 @@ export function TradingDayPicker({
           id={panelId}
           className={styles.panel}
           role="dialog"
-          aria-label="Choose a trading day"
+          aria-label={datePickerCopy.dialogLabel}
+          aria-describedby={hintId}
         >
           <DayPicker
             mode="single"
@@ -82,6 +90,9 @@ export function TradingDayPicker({
             ]}
             autoFocus
           />
+          <p id={hintId} className={styles.hint}>
+            {datePickerCopy.keyboardHint}
+          </p>
         </div>
       ) : null}
     </div>

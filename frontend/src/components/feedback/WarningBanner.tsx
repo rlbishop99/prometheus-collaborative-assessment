@@ -5,6 +5,8 @@ import styles from './WarningBanner.module.css';
 
 interface WarningBannerProps {
   readonly message: string;
+  /** Optional id so a related control (e.g. the search input) can reference this message. */
+  readonly id?: string;
 }
 
 /**
@@ -12,12 +14,12 @@ interface WarningBannerProps {
  * The single warning template used for every warning, as agreed. `role="alert"` makes screen
  * readers announce it as soon as it appears; the icon is decorative because the text carries the
  * meaning.
- * @param props - The message to show.
+ * @param props - The message to show and an optional id.
  * @returns The banner.
  */
-export function WarningBanner({ message }: WarningBannerProps): ReactNode {
+export function WarningBanner({ message, id }: WarningBannerProps): ReactNode {
   return (
-    <div className={styles.banner} role="alert">
+    <div id={id} className={styles.banner} role="alert">
       <WarningIcon size={22} />
       <p className={styles.message}>{message}</p>
     </div>

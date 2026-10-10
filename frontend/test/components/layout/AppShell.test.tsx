@@ -4,12 +4,17 @@ import { describe, expect, it } from 'vitest';
 import { AppShell, MAIN_CONTENT_ID } from '../../../src/components/layout/AppShell';
 
 describe('AppShell', () => {
-  it('exposes header, sidebar and main landmarks', () => {
+  it('exposes header and main landmarks', () => {
     render(<AppShell title="Search">body</AppShell>);
 
     expect(screen.getByRole('banner')).toBeInTheDocument();
-    expect(screen.getByRole('complementary', { name: 'Sidebar' })).toBeInTheDocument();
     expect(screen.getByRole('main')).toHaveTextContent('body');
+  });
+
+  it('omits the sidebar landmark while the sidebar is empty', () => {
+    render(<AppShell title="Search">body</AppShell>);
+
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
   });
 
   it('renders the title as the single page heading', () => {
@@ -47,6 +52,6 @@ describe('AppShell', () => {
       </AppShell>,
     );
     expect(screen.getByRole('banner')).toHaveTextContent('extra header');
-    expect(screen.getByRole('complementary')).toHaveTextContent('side');
+    expect(screen.getByRole('complementary', { name: 'Sidebar' })).toHaveTextContent('side');
   });
 });

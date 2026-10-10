@@ -41,9 +41,14 @@ export function AppShell({
         <h1 className={styles.title}>{title}</h1>
         {headerContent ? <div className={styles.headerContent}>{headerContent}</div> : null}
       </header>
-      <aside className={styles.sidebar} aria-label="Sidebar">
-        {sidebarContent}
-      </aside>
+      {/* An empty <aside> would be a pointless landmark for screen readers; keep only the column. */}
+      {sidebarContent ? (
+        <aside className={styles.sidebar} aria-label="Sidebar">
+          {sidebarContent}
+        </aside>
+      ) : (
+        <div className={styles.sidebar} />
+      )}
       <main id={MAIN_CONTENT_ID} className={styles.main} tabIndex={-1}>
         <div className={styles.content}>{children}</div>
       </main>

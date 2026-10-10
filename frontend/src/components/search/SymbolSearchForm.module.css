@@ -11,6 +11,11 @@
   border-color: var(--color-focus-ring);
 }
 
+/* Invalid input gets the warning color too, so the problem is not signalled by the banner alone. */
+.form:has(input[aria-invalid='true']) {
+  border-color: var(--color-warning-icon);
+}
+
 .input {
   width: 11rem;
   min-width: 0;

@@ -19,6 +19,9 @@ Every AI output was reviewed before it was committed. These are the points where
 | 19 | AI-drafted warning copy | **Replaced** with my own wording |
 | 21 | Visual QA of the running app (5 screenshots) | **Found 3 issues**: mobile calendar clipped, logo line trending down, styling pass wanted |
 | 22 | Visual QA of the AI's first mobile calendar fix | **Rejected** the bottom-sheet fix; approved the anchored fix after a second screenshot |
+| 23-24 | Step 9 scroll-to-top and accessibility pass (2 screenshots plus keyboard testing) | Approved the invalid-input border and back-to-top button; **questioned** the calendar's keyboard behavior (Tab skips the days) |
+| 25 | Calendar keyboard options | Chose hint plus Tab containment, **and found a bug**: tabbing to the browser URL bar left the calendar open |
+| 26 | Keyboard reachability of the metric cells | **Found a gap**: the trend explanation was hover-only, invisible to sighted keyboard and touch users; chose a visible caption; asked how blind users consume the cells |
 
 ---
 
@@ -388,6 +391,74 @@ Every AI output was reviewed before it was committed. These are the points where
 - **Accepted after re-review:** the AI addressed the root cause instead. On mobile the search form always fills the first row, so the date trigger always starts the next row at the left edge and the calendar can be anchored directly under it (left-aligned, width-capped). Confirmed by my second screenshot.
 - The AI updated Entry 21 and the step 8 commit message to describe the final fix rather than the rejected one.
 - Takeaway for the process: I keep doing visual QA myself (the AI offered to install headless Chromium for screenshots, and I declined), and no UI step is committed until I have seen it render correctly on desktop and mobile.
+
+---
+
+## Entry 23 - Build step 9: scroll-to-top, responsive review, accessibility pass (2026-10-10)
+
+**Prompt:** "Perfect, these have been committed. Please proceed with Step 9!"
+
+**Why:** Finish the mobile mockup (back-to-top control) and harden accessibility and responsiveness before the docs step.
+
+**Outcome:**
+- `ScrollToTopButton` + `ScrollTopIcon` (colored SVG, as in the mobile mockups): mobile-only, appears after scrolling about 240px, scrolls smoothly (or jumps under reduced motion), then moves focus to `main` so keyboard and screen-reader users land at the top too. `useScrolledPast` uses a passive scroll listener coalesced to one check per animation frame.
+- **Interpretation flagged for my review:** the mockups draw the button permanently; the AI shows it only once the page is scrolled, because at the top it would do nothing.
+- Accessibility fixes found by the AI's audit of its own step 8 code:
+  1. An empty `<aside>` gave screen readers a pointless "Sidebar" landmark; it now renders only when it has content.
+  2. Input warnings (empty, malformed, not found) now set `aria-invalid` on the field and link it to the banner via `aria-describedby`, plus a warning-colored border, so the error is not signalled by the banner alone. Outages do not blame the input.
+  3. The date popover now also closes when focus leaves it (e.g. Tab past the last day).
+  4. The tab title follows the viewed symbol ("TSLA · Symbol Tracker").
+- Responsive fix: mobile `main` gets bottom padding, so the fixed back-to-top button can never permanently cover the last card.
+- **AI self-correction:** a test exposed that the scroll hook's frame coalescing (`frame ??= requestAnimationFrame(...)`) silently stopped working if the scheduler ran the callback synchronously. Not reachable in real browsers, but fragile, so it was rewritten with an explicit `pending` flag that is correct under any scheduler.
+- `APP_NAME` moved from the `Logo` component into `content/documentTitle.ts`, so content never depends on a component.
+- 204 frontend tests (19 new) plus 203 backend tests pass. Typecheck, lint, format and build are clean.
+- **Pending my visual QA:** the back-to-top button and the invalid-input border on mobile.
+
+---
+
+## Entry 24 - Step 9 visual and keyboard QA (2026-10-10)
+
+**Prompt (summarized):** Two mobile screenshots: the yellow invalid-input border (search "ASDRF", not found) and the back-to-top button after scrolling, with High Average clear of it. Both work as expected. Then a keyboard finding: "Once [the calendar] is open with Enter/Return you cannot `tab` through the dates. Tabbing completely moves on to the next component. You must use the arrow keys to navigate the day cells. Is this expected behavior?"
+
+**Why:** I test with the keyboard as well as visually, not just with a mouse.
+
+**Outcome:**
+- Approved: invalid-input border; back-to-top button position, visibility and bottom clearance.
+- AI explanation: arrow-key navigation inside the day grid (Tab treats the grid as one stop) is the WAI-ARIA Authoring Practices date-picker pattern, which react-day-picker implements deliberately. The abrupt feel comes from our setup: with a one-month window both month arrows are disabled and skipped by Tab, and the step 9 focus-out rule closes the popover on the first Tab.
+- Decision on how much to add on top of the standard pattern: see Entry 25.
+
+---
+
+## Entry 25 - Calendar keyboard decision, and a second focus bug I found (2026-10-10)
+
+**Prompt (summarized):** Asked to choose between (1) a keyboard hint plus keeping Tab inside the open calendar, (2) a hint only, or (3) no change, I picked option 1 and added: "Tabbing out brings focus to other components like the URL bar in my browser, but it doesn't actually close the Calendar. Let's revisit this and ensure that if the Calendar no longer has focus then it closes out."
+
+**Why:** Keyboard users need a discoverable way to operate the calendar, and a popover that stays open after losing focus is a bug.
+
+**Outcome:**
+- **Bug I found in the AI's step 9 fix:** the AI's "close when focus moves outside" listened for `focusin` inside the page. Focus moving to the browser's own UI (URL bar, another window) leaves the page and fires no `focusin` there, so the calendar stayed open. **Fix:** the popover also closes on the window's `blur` event. It now closes on any loss of focus: Escape, an outside click, focus elsewhere in the page, or focus leaving the page.
+- Option 1 implemented:
+  - A visible hint, "Use arrow keys to choose a day. Esc to close.", linked to the dialog through `aria-describedby` so screen readers announce it on open.
+  - A new single-purpose `useFocusTrap` hook keeps Tab and Shift+Tab cycling within the open calendar (month arrow and day grid when both are available; it stays on the grid when that is the only stop). Arrow keys still move between days.
+- Picker copy moved into `content/datePickerCopy.ts`.
+- 7 new keyboard tests: the hint and its description, arrow-key movement, Tab and Shift+Tab containment for both one- and two-stop calendars, Tab never reaching outside controls, window blur closing the dialog, and tab-stop detection. 211 frontend plus 203 backend tests pass; typecheck, lint, format and build are clean.
+- Re-tested and approved by me in the browser (see Entry 26).
+
+---
+
+## Entry 26 - Metric cells and keyboard users (2026-10-10)
+
+**Prompt (summarized):** "The actual cells and their contents are not focusable using Tab. My browser goes straight from the calendar back to the top of the browser... It never focuses on the contents within each table cell." Then, choosing the AI's recommended fix: "Let's go with Option 1 but my question is for blind users, how do they consume the contents of the cells?"
+
+**Why:** I was keyboard-testing every part of the page, not only the controls.
+
+**Outcome:**
+- AI explanation (kept): read-only content should not be a Tab stop (WCAG discourages focusable static content, because extra stops slow keyboard users). Screen-reader users read content in browse mode (arrow keys in NVDA, JAWS and Orca; VO+arrows in VoiceOver) and jump by landmark. The cells sit in a named "Daily summary" live region and a description list, so they are announced as "Volume, 3,468,371, ...", with placeholders read as "No data". The AI noted that I can try this on Fedora with Orca (Super+Alt+S).
+- **Real gap uncovered by my test:** the trend explanation ("Higher than Oct 9th, 2026") existed only as a hover tooltip plus a screen-reader label. Sighted keyboard users and touch users never saw it.
+- Options offered: a visible caption (recommended), focusable cells with a tooltip on focus, or leave as-is. **I chose the visible caption.**
+- Implemented: each compared value now shows a caption under it ("Higher than Oct 9th", per the preview I approved, using a new `formatMonthDay`). The glyph became decorative (`aria-hidden`), so screen readers don't read the comparison twice, and the hover tooltip was removed as redundant. `MetricCell` takes the glyph and caption as one `Comparison` object, so an arrow can never appear without its explanation. `formatDay` now reuses `formatMonthDay` (DRY).
+- Tests updated to the new contract (visible caption text; glyph hidden from the accessibility tree). 215 frontend plus 203 backend tests pass; typecheck, lint, format and build are clean.
+- **Re-checked and approved by me** in the browser ("This looks correct to me"), including the calendar keyboard fixes from Entry 25.
 
 ---
 

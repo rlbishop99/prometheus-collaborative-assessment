@@ -28,6 +28,21 @@ export function shouldRetainData(failure: SearchFailure): boolean {
 
 /**
  * Rocko Bishop
+ * Decides whether a failure is about what the user typed, in which case the input itself is
+ * flagged invalid and linked to the message, not only the banner.
+ * @param failure - The failure.
+ * @returns True for empty, malformed or unknown-symbol input.
+ */
+export function isInputFailure(failure: SearchFailure): boolean {
+  return (
+    failure.kind === 'emptyInput' ||
+    failure.kind === 'malformedInput' ||
+    failure.kind === 'notFound'
+  );
+}
+
+/**
+ * Rocko Bishop
  * Maps API error kinds to UI failure kinds, folding the server's 400 into `malformedInput`.
  * @param kind - The API error kind.
  * @returns The UI failure kind.

@@ -35,6 +35,16 @@
   box-shadow: 0 10px 30px rgb(16 24 40 / 18%);
 }
 
+.hint {
+  max-width: 17.5rem;
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: var(--border-width) solid var(--color-border);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
 /*
  * react-day-picker declares its variables on .rdp-root, so they must be overridden there; setting
  * them on .panel would lose to the library's own declarations.

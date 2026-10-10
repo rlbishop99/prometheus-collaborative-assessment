@@ -1,9 +1,8 @@
 import type { ReactNode } from 'react';
 
+import { APP_NAME } from '../../content/documentTitle';
 import { LogoMarkIcon } from '../icons/LogoMarkIcon';
 import styles from './Logo.module.css';
-
-export const APP_NAME = 'Symbol Tracker';
 
 /**
  * Rocko Bishop

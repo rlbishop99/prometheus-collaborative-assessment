@@ -12,9 +12,11 @@ export interface Popover {
 
 /**
  * Rocko Bishop
- * Open/close behavior for a popover: Escape or a pointer press outside the trigger and panel
- * closes it. Document listeners are attached only while the popover is open, so a closed popover
- * costs nothing.
+ * Open/close behavior for a popover. It closes whenever it no longer has the user's attention:
+ * Escape, a pointer press outside, focus moving elsewhere in the page, or focus leaving the page
+ * entirely (URL bar, another window). The last case fires no `focusin` in the page, so it is
+ * caught through the window's `blur` event. Listeners are attached only while open, so a closed
+ * popover costs nothing.
  * @returns Open state, actions and the refs to attach.
  */
 export function usePopover(): Popover {
@@ -40,17 +42,26 @@ export function usePopover(): Popover {
         close();
       }
     };
-    const onPointerDown = (event: PointerEvent): void => {
+    // A press or focus moving outside closes without stealing focus back: the user went elsewhere.
+    const closeIfOutside = (event: Event): void => {
       const target = event.target as Node | null;
       if (!isInside(target, triggerRef.current) && !isInside(target, panelRef.current)) {
         setIsOpen(false);
       }
     };
+    // Focus left the document (browser chrome, another app): nothing in the page has it any more.
+    const closeOnWindowBlur = (): void => {
+      setIsOpen(false);
+    };
     document.addEventListener('keydown', onKeyDown);
-    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('pointerdown', closeIfOutside);
+    document.addEventListener('focusin', closeIfOutside);
+    window.addEventListener('blur', closeOnWindowBlur);
     return () => {
       document.removeEventListener('keydown', onKeyDown);
-      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('pointerdown', closeIfOutside);
+      document.removeEventListener('focusin', closeIfOutside);
+      window.removeEventListener('blur', closeOnWindowBlur);
     };
   }, [isOpen, close]);
 

@@ -64,16 +64,22 @@ describe('MetricGrid', () => {
     };
     render(<MetricGrid selected={earlier} latest={latest} busy={false} />);
 
-    expect(within(valueOf('Volume')).getByRole('img')).toHaveAccessibleName(
-      'Higher than Oct 9th, 2026',
-    );
-    expect(within(valueOf('Low Average')).getByRole('img')).toHaveAccessibleName(
-      'Lower than Oct 9th, 2026',
-    );
-    expect(within(valueOf('High Average')).getByRole('img')).toHaveAccessibleName(
-      'Within 1% of Oct 9th, 2026',
-    );
-    expect(within(valueOf('Day')).queryByRole('img')).not.toBeInTheDocument();
+    // The comparison is visible text for everyone, read together with the value.
+    expect(valueOf('Volume')).toHaveTextContent('2,000,000Higher than Oct 9th');
+    expect(valueOf('Low Average')).toHaveTextContent('80.0000Lower than Oct 9th');
+    expect(valueOf('High Average')).toHaveTextContent('201.0000Within 1% of Oct 9th');
+    expect(screen.getByText('Higher than Oct 9th')).toBeVisible();
+    expect(valueOf('Day')).toHaveTextContent(/^Oct 1st, 2026$/);
+  });
+
+  it('shows a glyph per comparison, hidden from screen readers to avoid reading it twice', () => {
+    const earlier: DailySummary = { ...latest, day: '2026-10-01', volume: 2_000_000 };
+    render(<MetricGrid selected={earlier} latest={latest} busy={false} />);
+
+    const glyph = valueOf('Volume').querySelector('svg');
+    expect(glyph).toHaveAttribute('aria-hidden', 'true');
+    expect(glyph).toHaveClass('trendUp');
+    expect(screen.queryAllByRole('img')).toHaveLength(0);
   });
 
   it('announces updates politely and exposes the loading state', () => {
