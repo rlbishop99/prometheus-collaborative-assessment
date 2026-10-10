@@ -1,0 +1,8 @@
+node_modules
+dist
+coverage
+package-lock.json
+Mockups for Symbol Search App
+backend/test/fixtures
+# Hand-written prose docs keep their authored formatting.
+*.md
