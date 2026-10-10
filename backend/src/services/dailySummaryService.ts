@@ -10,6 +10,11 @@ import type { MarketDataProvider } from '../providers/marketDataProvider.js';
 
 export type DailySummaries = readonly DailySummary[];
 
+/** What the HTTP layer depends on: the use case only, not the concrete service. */
+export interface DailySummaryReader {
+  getDailySummaries(rawSymbol: unknown): Promise<DailySummaries>;
+}
+
 export interface DailySummaryServiceConfig {
   /** Rolling window length in calendar days. */
   readonly windowDays: number;
@@ -29,7 +34,7 @@ export interface DailySummaryServiceDeps {
  * Use case: "give me the daily summaries for a symbol". It orchestrates normalization, the cache,
  * request coalescing, the provider and aggregation, and owns none of their logic itself.
  */
-export class DailySummaryService {
+export class DailySummaryService implements DailySummaryReader {
   /**
    * Rocko Bishop
    * Creates the service from its collaborators; every dependency is an abstraction or a value.

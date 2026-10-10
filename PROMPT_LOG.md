@@ -233,6 +233,29 @@ Manual (non-AI) changes are recorded in the final section.
 
 ---
 
+## Entry 16 - Build step 5: Fastify app, endpoint, problem details, config (2026-10-10)
+
+**Prompt:** "Step 4 has been committed. I reverted the blank line edit I made since I don't want to make Prettier upset. Let's move onto Step 5!"
+
+**Why:** Expose the use case over HTTP with the agreed RFC 7807 errors, make every tunable configurable, and verify against live Yahoo.
+
+**Outcome:**
+- `config/appConfig.ts`: Zod-validated env vars, all with defaults. Fails fast, listing **every** bad variable at once. Deep-frozen.
+- `http/`: the route only delegates to a `DailySummaryReader` interface. A response schema gives Fastify a precompiled serializer (faster than `JSON.stringify`) and strips any non-contract field. A global error handler maps AppErrors to problem+json, reports framework 4xx as-is, and hides unexpected errors behind a generic 500 (verified with a "leaked password" test). A 404 handler covers unknown routes.
+- Composition split: `app.ts` (HTTP wiring, no listen), `container.ts` (the only place that knows concrete classes), `server.ts` (listen, graceful SIGINT/SIGTERM shutdown with a forced-exit timer, non-zero exit on startup failure).
+- `/health` deliberately doesn't call Yahoo, so an upstream outage can't get healthy instances restarted.
+- Full-stack tests run the real container with only the network and clock stubbed: cache expiry at exactly 2:00, 5 concurrent cold requests producing 1 Yahoo call, a 503 after 3 attempts that is not cached, and recovery.
+- **AI assumption corrected by a test:** the AI expected `/stocks//daily-summary` to 404, but Fastify matches it with an empty symbol. The real stack already returns a 400 "invalid symbol" (more helpful), so the test was moved to the full-stack suite and asserts that.
+- **Live verification** (built server against real Yahoo):
+  - TSLA: 22 trading days, 2026-09-10 to 2026-10-09, in 0.40 s cold and 0.001 s cached.
+  - `^GSPC` works.
+  - Unknown symbol gives a 404, malformed gives a 400, and an unknown route gives a 404 problem.
+  - SIGINT exits with code 0; `PORT=abc` exits with code 1 and a readable message.
+- `backend/setup.md` written: prerequisites, run, test, an endpoint table and an env var reference.
+- 203 tests passing (34 new). Typecheck, lint, format and build are clean.
+
+---
+
 ## Manual changes (outside AI)
 
-_None yet._
+- **2026-10-10, `backend/src/infra/http/fetchWithRetry.ts`:** I added a blank line inside `HttpGetRequest`. It contained trailing whitespace, which failed Prettier and `.editorconfig`. The AI flagged it before drafting the step 4 commit message, and I reverted it to keep the codebase format-clean. Net change: none.
