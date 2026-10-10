@@ -1,14 +1,47 @@
-/* Desktop: 2 x 2 as in the mockups. Mobile: one column. */
+/*
+ * Desktop: the grid region takes all the height left in the main column, and is a 2-D size
+ * container, so spacing can use `cqi` (1% of its width) and `cqb` (1% of its height). The 2x2
+ * cells stretch to fill it, so all four are always visible and the page never scrolls.
+ *
+ * Enlarging a cell by 20% adds 10% of its width on each side and 10% of its height above and
+ * below. Solving for 2 cells per axis with gap = 25% and padding = 15% of a cell's size:
+ *   container = 2 cells + gap + 2 * padding = 2.55 cells
+ *   gap = 0.25 / 2.55 = 9.8%, padding = 0.15 / 2.55 = 5.9%   (of the width or height)
+ * so two enlarged neighbors cannot touch (needs 20%), and an enlarged edge cell never reaches the
+ * edge of the region (needs 10%), horizontally and vertically, at any window shape.
+ */
+.region {
+  container-type: size;
+  flex: 1;
+  min-height: 0;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-6);
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 9.8cqb 9.8cqi;
+  height: 100%;
   margin: 0;
+  padding: 5.9cqb 5.9cqi;
 }
 
+/*
+ * Mobile: one column of 16:9 cells, and the page scrolls. Only the width is a container here.
+ * With padding P = 0.15W: C = W + 2P -> P = 11.5cqi. The row gap must be >= 0.2H = 0.1125W;
+ * 0.25H = 10.8cqi of C keeps a margin.
+ */
 @media (max-width: 767px) {
+  .region {
+    container-type: inline-size;
+    flex: none;
+  }
+
   .grid {
     grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-5);
+    grid-template-rows: none;
+    gap: 10.8cqi;
+    height: auto;
+    padding: 11.5cqi;
   }
 }

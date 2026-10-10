@@ -23,6 +23,9 @@ Every AI output was reviewed before it was committed. These are the points where
 | 25 | Calendar keyboard options | Chose hint plus Tab containment, **and found a bug**: tabbing to the browser URL bar left the calendar open |
 | 26 | Keyboard reachability of the metric cells | **Found a gap**: the trend explanation was hover-only, invisible to sighted keyboard and touch users; chose a visible caption; asked how blind users consume the cells |
 | 27 | README, setup docs and the final log pass | Reviewed and approved |
+| 28 | Styling pass round 1 (annotated screenshot) | **Directed the visual design**: palette, glow, 20% growth and layout; reversed the "cells not focusable" rule |
+| 29 | Desktop QA of styling round 1 | **Found** the desktop layout scrolling with the cells cut off; required all 4 cells to always fit without scrolling. Fix confirmed by my next screenshot |
+| 30 | Text size inside the cells | **Requested** larger text to reduce empty space in each cell; approved after re-check |
 
 ---
 
@@ -481,6 +484,55 @@ Every AI output was reviewed before it was committed. These are the points where
   - `CLAUDE.md`: decisions from steps 7-9.
   - This log: the Manual changes section now records my mockups, commit authorship and format, and QA work.
 - Reviewed and approved by me ("This looks good to me").
+
+---
+
+## Entry 28 - Styling pass, round 1: palette, cell growth, layout (2026-10-10)
+
+**Prompt (summarized):** With an annotated screenshot (green boxes marking where I wanted the content): (1) a purple/lavender neon "cyberpunk" palette, with each cell having a drop shadow and a thin mint-green/blue glow border; (2) on hover or focus a cell grows 20% and shrinks back afterwards, with enough padding that an enlarged cell never touches another cell or the page edge; (3) left-align the search bar and calendar, and let the four cells fill more of the main area.
+
+**Why:** The functional build was complete; this is the visual polish pass I had deferred until after implementation.
+
+**Outcome:**
+- AI flagged that "grow on focus" conflicts with the Entry 26 decision (read-only cells are not Tab stops). It implemented my request and **reversed that decision**: each cell is now a focusable `role="group"`, named by its label and described by its value. Growth triggers on hover or `:focus-visible`, not on a mouse click, so a clicked cell never stays enlarged after the pointer leaves.
+- (1) `tokens.css` rewritten: deep indigo/purple surfaces, lavender text and brand, a mint-cyan glow for cell borders, glows and focus rings; neon trend colors; a light lavender variant for light mode; and a faint purple background bloom. The favicon and `theme-color` were recolored. Two leftover raw shadow colors were replaced with tokens.
+- (2) Collision-free growth by construction: the metric grid is a CSS size container, and its gaps and padding are in `cqi` units sized from the 20% growth. Desktop gap = 25% of a cell's width (two enlarged neighbors still cannot touch); padding = 15% (an enlarged edge cell never reaches the page edge); 16:9 cells keep the vertical clearance proportional; mobile has its own single-column numbers. The derivation is documented in `MetricGrid.module.css`.
+- (3) Removed the 960px centered content column: the toolbar sits left with the main padding, and the grid fills the width (about 700x400px cells on a wide screen, roughly matching my sketch).
+- **Real accessibility bug caught by a new test:** the cell's computed description read "2,000,000Higher than Oct 9th", run together because adjacent spans had no whitespace. An earlier test had **asserted the run-together text** and was therefore locking the bug in. Fixed with an explicit space node, and that test was corrected.
+- Docs written in step 10 (README, `CLAUDE.md`, `frontend/setup.md`) were corrected to describe focusable cells and the new theme.
+- 217 frontend tests (2 new) plus 203 backend tests pass. Typecheck, lint, format and build are clean.
+- **Pending my visual QA.**
+
+---
+
+## Entry 29 - Styling QA: desktop must never scroll (2026-10-10)
+
+**Prompt (summarized):** A desktop screenshot showing the cells too tall for the window (the bottom row cut off and a scrollbar), with: "I don't ever want there to be a scrollport when the layout isn't using the mobile version. All 4 cells should always be visible in the main body while using the Desktop format."
+
+**Why:** Visual QA of styling round 1. A dashboard of four values should be fully visible at a glance.
+
+**Outcome:**
+- AI root cause: round 1 sized everything from the grid's **width** only (16:9 cells plus width-based spacing), so a wide but short window produced cells taller than the viewport.
+- **Fix:** the desktop page is locked to the viewport height (`100dvh`, no page scroll). Below the header and toolbar, the main column gives the grid exactly the remaining space, and the 2x2 cells stretch to fill it instead of keeping a fixed ratio. The grid is now a 2-D size container: horizontal spacing uses `cqi` (its width) and vertical spacing uses `cqb` (its height), with the same 25% gap and 15% padding derivation, so the 20% hover growth stays clear on all four sides at any window shape. Cell text scales with the smaller of width and height, so it fits short windows.
+- Mobile is unchanged: a single column of 16:9 cells, with the page scrolling.
+- 217 frontend tests pass (CSS layout is not covered by jsdom tests, so this relies on my browser QA). Lint, format and build are clean.
+- **Pending my visual QA** at several window sizes.
+
+---
+
+## Entry 30 - Styling QA: larger text inside the cells (2026-10-10)
+
+**Prompt (summarized):** A desktop screenshot confirming the no-scroll fix (all four cells visible, NVDA data). Then: "Could we scale up the text inside of the boxes so that there's less negative space within each cell?"
+
+**Why:** With the cells now filling the screen, the fixed-cap text left large empty areas.
+
+**Outcome:**
+- Entry 29's fix is confirmed working by my screenshot.
+- AI root cause: the text was sized relative to the whole **grid**, with a hard cap (value at most 3rem), so it stopped growing long before the cells did.
+- **Fix:** each cell is now its own CSS size container, and its text is sized from the cell's width and height. The bound was derived from the widest content: a value like "121,941,429 ▲" is about 8em wide, so the value is capped at 9.5% of the cell width (about 15% margin) and 30% of its height (label, value and caption stacked). The label and caption scale in proportion. The trend glyph is sized in `em`, so it grows with the number. Mobile now uses the same rules, so the separate mobile font overrides were removed.
+- The AI's estimate for the screenshot's cell size (about 820x430px): value about 48px to 78px, label about 20px to 34px, caption 14px to 28px, with the widest value at about 70% of the cell width.
+- 217 frontend tests pass; lint, format and build are clean; no undefined tokens.
+- Re-checked and approved by me ("This looks good"). This closes the styling pass.
 
 ---
 

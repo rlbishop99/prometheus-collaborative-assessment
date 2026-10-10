@@ -1,57 +1,100 @@
-.cell {
+.slot {
   display: flex;
+  list-style: none;
+}
+
+/*
+ * A neon card: dark surface, thin mint border, drop shadow plus soft outer glow. Hover or keyboard
+ * focus enlarges it by 20%. The grid's spacing (MetricGrid.module.css) is sized so an enlarged
+ * cell never reaches its neighbors or the page edge. Mouse clicks do not trigger it
+ * (:focus-visible only), so a clicked cell never stays enlarged after the pointer leaves.
+ */
+.cell {
+  container-type: size;
+  position: relative;
+  display: flex;
+  flex: 1;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-3);
-  min-height: 9rem;
-  padding: var(--space-5) var(--space-4);
-  border: var(--border-width) solid var(--color-border);
+  gap: 3%;
+  min-height: 0;
+  padding: var(--space-3);
+  overflow: hidden;
+  border: var(--border-width) solid var(--color-glow);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-card), var(--glow-cell);
   text-align: center;
+  transition:
+    transform var(--transition-grow),
+    box-shadow var(--transition-grow);
 }
 
+.cell:hover,
+.cell:focus-visible {
+  z-index: 1;
+  transform: scale(1.2);
+  box-shadow: var(--shadow-card), var(--glow-cell-active);
+}
+
+/* The glow itself is the focus indicator, reinforced with a ring in the focus color. */
+.cell:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 3px;
+}
+
+/*
+ * Text is sized from the cell itself (each .cell is a size container: cqi = 1% of the cell's
+ * width, cqb = 1% of its height), so it grows with the card instead of leaving empty space.
+ * The widest content (e.g. "121,941,429 ▲" or "Oct 22nd, 2026") is about 8em wide at the value
+ * size, so 9.5cqi leaves roughly 15% horizontal margin; 30cqb keeps the label + value + caption
+ * stack inside the card's height. Label and caption scale in proportion to the value.
+ */
 .label {
-  font-size: var(--font-size-md);
+  font-size: clamp(var(--font-size-sm), min(4.2cqi, 13cqb), 2.5rem);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-muted);
-  text-transform: none;
+  letter-spacing: 0.02em;
 }
 
 .body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-1);
-  margin: 0;
+  gap: 0.15em;
 }
 
+/* The value size lives on the row, so the trend glyph (sized in em) scales with the number. */
 .valueRow {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
-  min-height: 2.5rem;
-}
-
-.caption {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
+  gap: 0.25em;
+  font-size: clamp(1.25rem, min(9.5cqi, 30cqb), 7rem);
 }
 
 .value {
-  font-size: var(--font-size-metric);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
   font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+}
+
+.caption {
+  font-size: clamp(var(--font-size-sm), min(3.4cqi, 10cqb), 2rem);
+  color: var(--color-text-muted);
 }
 
 .placeholder {
-  font-size: var(--font-size-metric);
   line-height: var(--line-height-tight);
   letter-spacing: 0.3em;
   color: var(--color-border-strong);
+}
+
+/* Mobile: cells keep a 16:9 shape in a scrolling single column; text uses the same cell rules. */
+@media (max-width: 767px) {
+  .cell {
+    aspect-ratio: 16 / 9;
+  }
 }

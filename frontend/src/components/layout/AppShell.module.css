@@ -1,12 +1,18 @@
-/* Desktop: the brand sits over a sidebar column, and the header sits over the main column. */
+/*
+ * Desktop: the brand sits over a sidebar column, and the header sits over the main column. The
+ * page is locked to the viewport height and never scrolls; the main column hands the remaining
+ * height to the metric grid, which fits all four cells into it.
+ */
 .shell {
   display: grid;
   grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto minmax(0, 1fr);
   grid-template-areas:
     'brand header'
     'sidebar main';
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 .skipLink {
@@ -71,22 +77,37 @@
 
 .main {
   grid-area: main;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   padding: var(--space-6);
   outline: none;
 }
 
+/*
+ * Content fills the main column: the toolbar sits at the left and its natural height is kept, and
+ * the cells take all of the remaining width and height.
+ */
 .content {
-  max-width: var(--content-max-width);
-  margin: 0 auto;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
 }
 
 /* Mobile: the sidebar collapses, and the brand and title share one header row (see mockups). */
 @media (max-width: 767px) {
+  /* Mobile scrolls normally: the cells stack, so the page grows with them. */
   .shell {
     grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
     grid-template-areas:
       'brand header'
       'main main';
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
   }
 
   .brand {
@@ -108,6 +129,11 @@
 
   /* Extra bottom room so the last card can scroll clear of the fixed back-to-top button (44px). */
   .main {
+    display: block;
     padding: var(--space-4) var(--space-4) calc(var(--space-4) * 2 + 44px);
+  }
+
+  .content {
+    display: block;
   }
 }

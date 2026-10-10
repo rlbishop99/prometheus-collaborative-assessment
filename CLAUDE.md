@@ -43,8 +43,9 @@ Layout: `backend/` and `frontend/`, each with its own `setup.md`. Root has `READ
 - User-facing copy is **user-authored** and lives in `frontend/src/content/`, pinned by exact-string tests. Never reword it without asking. A valid symbol with zero trading days shows "No trading data found for X in the last 30 days."
 - Date picker is a **popover** under its trigger, on desktop and mobile. On mobile the search form fills the first toolbar row, so the trigger always starts the next row at the left edge.
 - Calendar keyboard follows the WAI-ARIA date-picker pattern: arrow keys between days, Tab contained in the dialog, a visible keyboard hint, and it closes on any loss of focus, including window blur.
-- Trend comparisons are a **visible caption** ("Higher than Oct 9th") with a decorative glyph, never hover-only. Read-only cells are not Tab stops.
+- Trend comparisons are a **visible caption** ("Higher than Oct 9th") with a decorative glyph, never hover-only.
 - Mobile back-to-top button appears after scrolling, honors reduced motion, and moves focus to `main`.
+- **Styling pass, round 1 (user-directed):** neon purple/lavender palette with mint-cyan glow; each metric cell has a drop shadow plus a thin glowing border, and enlarges 20% on hover or keyboard focus (`:focus-visible`, not mouse click). This reverses the earlier "cells are not Tab stops" rule: cells are focusable groups (`role="group"`, labelled by the label, described by the value). Grid gaps and padding are in `cqi` units sized so enlarged cells never touch each other or the page edge (see `MetricGrid.module.css`). Toolbar is left-aligned and the grid fills the main column.
 - The user does all visual and keyboard QA in their own browser; there is no headless browser. A styling pass is planned after implementation: confine it to `styles/tokens.css` and the `*.module.css` files.
 
 ## Tenets

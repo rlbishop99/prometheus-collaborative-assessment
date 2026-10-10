@@ -14,7 +14,7 @@
     border: none;
     border-radius: 50%;
     background: transparent;
-    box-shadow: 0 4px 14px rgb(16 24 40 / 30%);
+    box-shadow: var(--shadow-card), var(--glow-cell);
     cursor: pointer;
   }
 }

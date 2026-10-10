@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
 import { MetricGrid } from '../../../src/components/metrics/MetricGrid';
@@ -11,11 +12,11 @@ const latest: DailySummary = {
   volume: 1_000_000,
 };
 
-/** Returns the `dd` (value) element for a labelled cell. */
+/** The value area of a cell: the element that describes the cell's focusable group. */
 const valueOf = (label: string): HTMLElement => {
-  const term = screen.getByText(label, { selector: 'dt' });
-  const value = term.nextElementSibling;
-  if (!(value instanceof HTMLElement)) throw new Error(`No value for ${label}`);
+  const group = screen.getByRole('group', { name: label });
+  const value = document.getElementById(group.getAttribute('aria-describedby') ?? '');
+  if (!value) throw new Error(`No value for ${label}`);
   return value;
 };
 
@@ -23,12 +24,9 @@ describe('MetricGrid', () => {
   it('renders the four cells in mockup order', () => {
     render(<MetricGrid selected={undefined} latest={undefined} busy={false} />);
 
-    expect(screen.getAllByRole('term').map((term) => term.textContent)).toEqual([
-      'Day',
-      'Volume',
-      'Low Average',
-      'High Average',
-    ]);
+    expect(
+      screen.getAllByRole('group').map((group) => group.querySelector('p')?.textContent),
+    ).toEqual(['Day', 'Volume', 'Low Average', 'High Average']);
   });
 
   it('shows "---" placeholders, announced as "No data", when there is nothing to show', () => {
@@ -65,9 +63,9 @@ describe('MetricGrid', () => {
     render(<MetricGrid selected={earlier} latest={latest} busy={false} />);
 
     // The comparison is visible text for everyone, read together with the value.
-    expect(valueOf('Volume')).toHaveTextContent('2,000,000Higher than Oct 9th');
-    expect(valueOf('Low Average')).toHaveTextContent('80.0000Lower than Oct 9th');
-    expect(valueOf('High Average')).toHaveTextContent('201.0000Within 1% of Oct 9th');
+    expect(valueOf('Volume')).toHaveTextContent('2,000,000 Higher than Oct 9th');
+    expect(valueOf('Low Average')).toHaveTextContent('80.0000 Lower than Oct 9th');
+    expect(valueOf('High Average')).toHaveTextContent('201.0000 Within 1% of Oct 9th');
     expect(screen.getByText('Higher than Oct 9th')).toBeVisible();
     expect(valueOf('Day')).toHaveTextContent(/^Oct 1st, 2026$/);
   });
@@ -80,6 +78,27 @@ describe('MetricGrid', () => {
     expect(glyph).toHaveAttribute('aria-hidden', 'true');
     expect(glyph).toHaveClass('trendUp');
     expect(screen.queryAllByRole('img')).toHaveLength(0);
+  });
+
+  it('makes every cell a keyboard stop named by its label and described by its value', async () => {
+    const user = userEvent.setup();
+    const earlier: DailySummary = { ...latest, day: '2026-10-01', volume: 2_000_000 };
+    render(<MetricGrid selected={earlier} latest={latest} busy={false} />);
+
+    const names = ['Day', 'Volume', 'Low Average', 'High Average'];
+    for (const name of names) {
+      await user.tab();
+      expect(screen.getByRole('group', { name })).toHaveFocus();
+    }
+    expect(screen.getByRole('group', { name: 'Volume' })).toHaveAccessibleDescription(
+      '2,000,000 Higher than Oct 9th',
+    );
+  });
+
+  it('describes empty cells as "No data"', () => {
+    render(<MetricGrid selected={undefined} latest={undefined} busy={false} />);
+
+    expect(screen.getByRole('group', { name: 'Day' })).toHaveAccessibleDescription('No data');
   });
 
   it('announces updates politely and exposes the loading state', () => {

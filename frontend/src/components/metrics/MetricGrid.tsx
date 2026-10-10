@@ -24,7 +24,8 @@ interface MetricGridProps {
  * The four cells in mockup order (Day, Volume, Low Average, High Average). It decides when a
  * comparison applies: only for a day other than the latest, which has no baseline to compare
  * against. The region is a named live landmark, so screen-reader users can jump to it and hear
- * updates.
+ * updates. The cells form a list; the explicit role keeps list semantics in Safari, which drops
+ * them from lists styled without bullets.
  * @param props - Selected and latest summaries, and the loading flag.
  * @returns The metric grid.
  */
@@ -33,13 +34,18 @@ export function MetricGrid({ selected, latest, busy }: MetricGridProps): ReactNo
     buildComparison(selected, latest, field);
 
   return (
-    <section aria-label="Daily summary" aria-live="polite" aria-busy={busy}>
-      <dl className={styles.grid}>
+    <section
+      className={styles.region}
+      aria-label="Daily summary"
+      aria-live="polite"
+      aria-busy={busy}
+    >
+      <ul className={styles.grid} role="list">
         <DayCell summary={selected} />
         <VolumeCell summary={selected} comparison={comparisonFor('volume')} />
         <LowAverageCell summary={selected} comparison={comparisonFor('lowAverage')} />
         <HighAverageCell summary={selected} comparison={comparisonFor('highAverage')} />
-      </dl>
+      </ul>
     </section>
   );
 }

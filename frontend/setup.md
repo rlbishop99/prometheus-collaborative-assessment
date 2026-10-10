@@ -60,7 +60,7 @@ Tests live in `frontend/test/`, mirroring `src/`. `test/App.test.tsx` walks thro
 3. Choosing an earlier day shows how each value compares with the latest day: green ▲ higher, red ▼ lower, grey ● within 1%, with a caption such as "Higher than Oct 9th".
 4. Re-searching the same symbol within 2 minutes reuses the data already loaded. After that it is fetched again, and if the API is down the last good data stays on screen under a warning.
 
-**Keyboard:** Tab moves between the search field, the search button and the date button. In the open calendar, the arrow keys move between days, Enter selects and Esc closes. On mobile, a back-to-top button appears once you scroll.
+**Keyboard:** Tab moves between the search field, the search button, the date button and the four metric cells (a focused cell enlarges, as on hover). In the open calendar, the arrow keys move between days, Enter selects and Esc closes. On mobile, a back-to-top button appears once you scroll.
 
 ## Project layout
 

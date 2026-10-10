@@ -116,7 +116,7 @@ React UI ──fetch /api──▶ Fastify route ──▶ DailySummaryService �
 - `components/`: presentational components, one per concern (each metric is its own cell component).
 - `content/`: all user-facing copy.
 
-Design tokens in `styles/tokens.css` drive every color and spacing value, with light and dark themes.
+Design tokens in `styles/tokens.css` drive every color and spacing value: a neon purple/lavender theme with mint-cyan glow accents, in dark and light variants.
 
 **Quality bar applied throughout** (`CLAUDE.md`):
 
@@ -150,7 +150,7 @@ Every UI change was also checked manually in a browser (desktop, mobile width, k
 ## Accessibility
 
 - Semantic landmarks, a skip link, and a single `h1`.
-- The metric cells are a labelled description list inside a named live region.
+- Each metric cell is a keyboard-focusable group named by its label and described by its value, inside a named live region; hover or focus enlarges it.
 - Warnings use `role="alert"`; input errors set `aria-invalid` and `aria-describedby`.
 - The calendar dialog follows the WAI-ARIA pattern (arrow keys between days, Tab contained, closes on any loss of focus) and has a visible keyboard hint.
 - Trend comparisons are visible text, not color or hover alone.

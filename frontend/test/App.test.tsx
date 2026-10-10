@@ -33,9 +33,11 @@ const searchFor = async (user: ReturnType<typeof userEvent.setup>, text: string)
   await user.click(screen.getByRole('button', { name: 'Search' }));
 };
 
+/** The value area of a cell: the element that describes the cell's focusable group. */
 const valueOf = (label: string): HTMLElement => {
-  const value = screen.getByText(label, { selector: 'dt' }).nextElementSibling;
-  if (!(value instanceof HTMLElement)) throw new Error(`No value for ${label}`);
+  const group = screen.getByRole('group', { name: label });
+  const value = document.getElementById(group.getAttribute('aria-describedby') ?? '');
+  if (!value) throw new Error(`No value for ${label}`);
   return value;
 };
 
